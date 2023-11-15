@@ -12,7 +12,7 @@ import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
 import {IParaSwapWithdrawSwapAdapter} from '../src/interfaces/IParaSwapWithdrawSwapAdapter.sol';
 import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
 import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
-import {stdMath} from 'forge-std/stdMath.sol';
+import {stdMath} from 'forge-std/StdMath.sol';
 
 contract WithdrawSwapV3Test is BaseTest {
   ParaSwapWithdrawSwapAdapterV3 internal withdrawSwapAdapter;

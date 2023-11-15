@@ -10,9 +10,9 @@ import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapLiquiditySwapAdapterV2} from '../src/contracts/ParaSwapLiquiditySwapAdapterV2.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
 import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
-import '../src/interfaces/IParaSwapLiquiditySwapAdapter.sol';
+import {IParaSwapLiquiditySwapAdapter} from '../src/interfaces/IParaSwapLiquiditySwapAdapter.sol';
 import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
-import {stdMath} from 'forge-std/stdMath.sol';
+import {stdMath} from 'forge-std/StdMath.sol';
 
 contract LiquiditySwapAdapterV2 is BaseTest {
   ParaSwapLiquiditySwapAdapterV2 internal liquiditySwapAdapter;

@@ -4,7 +4,7 @@ import {ICreditDelegationToken} from './ICreditDelegationToken.sol';
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 
-interface IParaswapDebtSwapAdapter is IBaseParaSwapAdapter {
+interface IParaSwapDebtSwapAdapter is IBaseParaSwapAdapter {
   struct FlashParams {
     address debtAsset;
     uint256 debtRepayAmount;

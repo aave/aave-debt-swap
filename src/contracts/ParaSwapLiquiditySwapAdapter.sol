@@ -13,7 +13,7 @@ import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
 import {ICreditDelegationToken} from '../interfaces/ICreditDelegationToken.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
-import {IParaswapLiquiditySwapAdapter} from '../interfaces/IParaswapLiquiditySwapAdapter.sol';
+import {IParaSwapLiquiditySwapAdapter} from '../interfaces/IParaSwapLiquiditySwapAdapter.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapter
@@ -24,7 +24,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
   BaseParaSwapSellAdapter,
   ReentrancyGuard,
   IFlashLoanReceiver,
-  IParaswapLiquiditySwapAdapter
+  IParaSwapLiquiditySwapAdapter
 {
   using SafeERC20 for IERC20WithPermit;
 
@@ -57,7 +57,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     IERC20WithPermit(reserve).safeApprove(address(POOL), type(uint256).max);
   }
 
-  ///@inheritdoc IParaswapLiquiditySwapAdapter
+  ///@inheritdoc IParaSwapLiquiditySwapAdapter
   function swapLiquidity(
     LiquiditySwapParams memory liquiditySwapParams,
     FlashParams memory flashParams,

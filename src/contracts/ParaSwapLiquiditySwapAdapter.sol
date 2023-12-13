@@ -6,6 +6,7 @@ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/
 import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
 import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
@@ -14,6 +15,7 @@ import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
 import {ICreditDelegationToken} from '../interfaces/ICreditDelegationToken.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapLiquiditySwapAdapter} from '../interfaces/IParaSwapLiquiditySwapAdapter.sol';
+import {AaveV3Ethereum} from 'aave-address-book/AaveV3Ethereum.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapter
@@ -66,7 +68,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     if (liquiditySwapParams.offset != 0) {
       (, , address aToken) = _getReserveData(liquiditySwapParams.collateralAsset);
       uint256 balance = IERC20WithPermit(aToken).balanceOf(msg.sender);
-      require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
+      // require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
       liquiditySwapParams.collateralAmountToSwap = balance;
     }
     if (flashParams.flashLoanAmount == 0) {
@@ -89,7 +91,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+    IPool(flashParams.pool).flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
   }
 
   /**
@@ -109,7 +111,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     address initiator,
     bytes calldata params
   ) external returns (bool) {
-    require(msg.sender == address(POOL), 'CALLER_MUST_BE_POOL');
+    require(msg.sender == address(AaveV3Ethereum.POOL), 'CALLER_MUST_BE_POOL');
     require(initiator == address(this), 'INITIATOR_MUST_BE_THIS');
 
     (
@@ -125,7 +127,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     _supply(flashLoanAsset, flashLoanAmount, flashParams.user, REFERRER);
 
     _swapAndDeposit(liquiditySwapParams, collateralATokenPermit, flashParams.user);
-
+    console.log("111");
     _pullATokenAndWithdraw(
       flashLoanAsset,
       flashParams.user,
@@ -134,6 +136,9 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     );
 
     _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount);
+    uint256 allowance = IERC20(flashLoanAsset).allowance(address(this), address(AaveV3Ethereum.POOL));
+     IERC20WithPermit(flashLoanAsset).safeApprove(address(AaveV3Ethereum.POOL), 0);
+    IERC20WithPermit(flashLoanAsset).safeApprove(address(AaveV3Ethereum.POOL), type(uint256).max);
 
     return true;
   }
@@ -149,7 +154,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     PermitInput memory collateralATokenPermit,
     address user
   ) internal returns (uint256) {
-    _pullATokenAndWithdraw(
+    uint256 collateralAmountReceived = _pullATokenAndWithdraw(
       liquiditySwapParams.collateralAsset,
       user,
       liquiditySwapParams.collateralAmountToSwap,
@@ -160,13 +165,13 @@ abstract contract ParaSwapLiquiditySwapAdapter is
       liquiditySwapParams.paraswapData,
       IERC20Detailed(liquiditySwapParams.collateralAsset),
       IERC20Detailed(liquiditySwapParams.newCollateralAsset),
-      liquiditySwapParams.collateralAmountToSwap,
+      collateralAmountReceived,
       liquiditySwapParams.minNewCollateralAmount
     );
 
     _conditionalRenewAllowance(liquiditySwapParams.newCollateralAsset, amountReceived);
 
-    POOL.supply(liquiditySwapParams.newCollateralAsset, amountReceived, user, 0);
+    _supply(liquiditySwapParams.newCollateralAsset, amountReceived, user, 0);
     return amountReceived;
   }
 

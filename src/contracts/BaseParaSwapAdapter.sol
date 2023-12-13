@@ -12,6 +12,7 @@ import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contr
 import {Ownable} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {IFlashLoanReceiverBase} from '../interfaces/IFlashLoanReceiverBase.sol';
 import {IBaseParaSwapAdapter} from '../interfaces/IBaseParaSwapAdapter.sol';
+import "forge-std/Test.sol";
 
 /**
  * @title BaseParaSwapAdapter
@@ -98,7 +99,7 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
     address user,
     uint256 amount,
     PermitInput memory permitInput
-  ) internal {
+  ) internal returns (uint256) {
     // If deadline is set to zero, assume there is no signature for permit
     if (permitInput.deadline != 0) {
       permitInput.aToken.permit(
@@ -114,11 +115,20 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
 
     (, , address reserveAToken) = _getReserveData(reserve);
 
+    uint256 reserveATokenBalanceBefore = IERC20(reserveAToken).balanceOf(address(this));
     // transfer from user to adapter
     IERC20(reserveAToken).safeTransferFrom(user, address(this), amount);
 
-    // // withdraw reserve
-    require(POOL.withdraw(reserve, amount, address(this)) == amount, 'UNEXPECTED_AMOUNT_WITHDRAWN');
+    uint256 reserveATokenBalanceReceived = IERC20(reserveAToken).balanceOf(address(this)) -
+      reserveATokenBalanceBefore;
+
+    // withdraw reserve
+    require(
+      POOL.withdraw(reserve, reserveATokenBalanceReceived, address(this)) ==
+        reserveATokenBalanceReceived,
+      'UNEXPECTED_AMOUNT_WITHDRAWN'
+    );
+    return reserveATokenBalanceReceived;
   }
 
   /**

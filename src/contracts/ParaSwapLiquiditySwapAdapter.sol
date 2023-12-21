@@ -62,36 +62,50 @@ abstract contract ParaSwapLiquiditySwapAdapter is
   ///@inheritdoc IParaSwapLiquiditySwapAdapter
   function swapLiquidity(
     LiquiditySwapParams memory liquiditySwapParams,
-    FlashParams memory flashParams,
-    PermitInput memory collateralATokenPermit
+    CreditDelegationInput memory creditDelegationPermit,
+    PermitInput memory collateralATokenPermit,
+    PermitInput memory extraCollateralATokenPermit
   ) external nonReentrant {
+    // delegate credit
+    if (creditDelegationPermit.deadline != 0) {
+      ICreditDelegationToken(creditDelegationPermit.debtToken).delegationWithSig(
+        msg.sender,
+        address(this),
+        creditDelegationPermit.value,
+        creditDelegationPermit.deadline,
+        creditDelegationPermit.v,
+        creditDelegationPermit.r,
+        creditDelegationPermit.s
+      );
+    }
+
     if (liquiditySwapParams.offset != 0) {
       (, , address aToken) = _getReserveData(liquiditySwapParams.collateralAsset);
       uint256 balance = IERC20WithPermit(aToken).balanceOf(msg.sender);
       // require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
       liquiditySwapParams.collateralAmountToSwap = balance;
     }
-    if (flashParams.flashLoanAmount == 0) {
+    if (liquiditySwapParams.extraCollateralAsset == address(0)) {
       _swapAndDeposit(liquiditySwapParams, collateralATokenPermit, msg.sender);
     } else {
-      _flash(liquiditySwapParams, flashParams, collateralATokenPermit);
+      _flash(liquiditySwapParams, collateralATokenPermit, extraCollateralATokenPermit);
     }
   }
 
   function _flash(
     LiquiditySwapParams memory liquiditySwapParams,
-    FlashParams memory flashParams,
-    PermitInput memory collateralATokenPermit
+    PermitInput memory collateralATokenPermit,
+    PermitInput memory extraCollateralATokenPermit
   ) internal virtual {
-    bytes memory params = abi.encode(liquiditySwapParams, flashParams, collateralATokenPermit);
+    bytes memory params = abi.encode(liquiditySwapParams, collateralATokenPermit, extraCollateralATokenPermit, msg.sender);
     address[] memory assets = new address[](1);
-    assets[0] = flashParams.flashLoanAsset;
+    assets[0] = liquiditySwapParams.extraCollateralAsset;
     uint256[] memory amounts = new uint256[](1);
-    amounts[0] = flashParams.flashLoanAmount;
+    amounts[0] = liquiditySwapParams.extraCollateralAmount;
     uint256[] memory interestRateModes = new uint256[](1);
-    interestRateModes[0] = 0;
+    interestRateModes[0] = 2;
 
-    IPool(flashParams.pool).flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+    IPool(POOL).flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
   }
 
   /**
@@ -116,29 +130,36 @@ abstract contract ParaSwapLiquiditySwapAdapter is
 
     (
       LiquiditySwapParams memory liquiditySwapParams,
-      FlashParams memory flashParams,
-      PermitInput memory collateralATokenPermit
-    ) = abi.decode(params, (LiquiditySwapParams, FlashParams, PermitInput));
+      PermitInput memory collateralATokenPermit,
+      PermitInput memory extraCollateralATokenPermit,
+      address user
+    ) = abi.decode(params, (LiquiditySwapParams, PermitInput, PermitInput, address));
 
     address flashLoanAsset = assets[0];
     uint256 flashLoanAmount = amounts[0];
 
     // Supply to the pool
-    _supply(flashLoanAsset, flashLoanAmount, flashParams.user, REFERRER);
+    _supply(flashLoanAsset, flashLoanAmount, user, REFERRER);
 
-    _swapAndDeposit(liquiditySwapParams, collateralATokenPermit, flashParams.user);
-    console.log("111");
-    _pullATokenAndWithdraw(
+    _swapAndDeposit(liquiditySwapParams, collateralATokenPermit, user);
+
+    uint256 amountWithdrawn = _pullATokenAndWithdraw(
       flashLoanAsset,
-      flashParams.user,
-      flashLoanAmount,
-      flashParams.flashLoanAssetPermit
+      user,
+      IERC20WithPermit(flashLoanAsset).balanceOf(msg.sender),
+      extraCollateralATokenPermit
     );
 
-    _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount);
-    uint256 allowance = IERC20(flashLoanAsset).allowance(address(this), address(AaveV3Ethereum.POOL));
-     IERC20WithPermit(flashLoanAsset).safeApprove(address(AaveV3Ethereum.POOL), 0);
-    IERC20WithPermit(flashLoanAsset).safeApprove(address(AaveV3Ethereum.POOL), type(uint256).max);
+    _conditionalRenewAllowance(flashLoanAsset, amountWithdrawn);
+
+    //repay the flashloan taken on behalf of user
+    POOL.repay(
+      flashLoanAsset,
+      amountWithdrawn,
+      2,
+      user
+    );
+    
 
     return true;
   }

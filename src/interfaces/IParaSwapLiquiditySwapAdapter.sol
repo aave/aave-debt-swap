@@ -2,34 +2,41 @@
 pragma solidity ^0.8.10;
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
+import {ICreditDelegationToken} from './ICreditDelegationToken.sol';
 
 interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
-  struct FlashParams {
-    address pool;
-    address flashLoanAsset;
-    uint256 flashLoanAmount;
-    address user;
-    PermitInput flashLoanAssetPermit;
-  }
 
   struct LiquiditySwapParams {
     address collateralAsset;
     uint256 collateralAmountToSwap;
     address newCollateralAsset;
     uint256 minNewCollateralAmount;
+    address extraCollateralAsset;
+    uint256 extraCollateralAmount;
     uint256 offset;
     bytes paraswapData;
+  }
+
+  struct CreditDelegationInput {
+    ICreditDelegationToken debtToken;
+    uint256 value;
+    uint256 deadline;
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
   }
 
   /**
    * @dev swaps liquidity(collateral) from one asset to another
    * @param liquiditySwapParams struct describing the liqudity swap
-   * @param flashParams optional struct describing flashloan params if needed
+   * @param creditDelegationPermit optional permit for credit delegation
    * @param collateralATokenPermit optional permit for collateral aToken
+   * @param extraCollateralATokenPermit optional permit for extra collateral aToken
    */
   function swapLiquidity(
     LiquiditySwapParams memory liquiditySwapParams,
-    FlashParams memory flashParams,
-    PermitInput memory collateralATokenPermit
+    CreditDelegationInput memory creditDelegationPermit,
+    PermitInput memory collateralATokenPermit,
+    PermitInput memory extraCollateralATokenPermit
   ) external;
 }

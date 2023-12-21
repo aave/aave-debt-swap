@@ -60,10 +60,24 @@ abstract contract ParaSwapRepayAdapter is
   ///@inheritdoc IParaSwapRepayAdapter
   function repayWithCollateral(
     RepayParams memory repayParams,
-    FlashParams memory flashParams,
-    PermitInput memory collateralATokenPermit
+    CreditDelegationInput memory creditDelegationPermit,
+    PermitInput memory collateralATokenPermit,
+    PermitInput memory extraCollateralATokenPermit
   ) external nonReentrant {
     uint256 excessBefore = IERC20Detailed(repayParams.collateralAsset).balanceOf(address(this));
+    // delegate credit
+    if (creditDelegationPermit.deadline != 0) {
+      ICreditDelegationToken(creditDelegationPermit.debtToken).delegationWithSig(
+        msg.sender,
+        address(this),
+        creditDelegationPermit.value,
+        creditDelegationPermit.deadline,
+        creditDelegationPermit.v,
+        creditDelegationPermit.r,
+        creditDelegationPermit.s
+      );
+    }
+
     repayParams.debtRepayAmount = getDebtRepayAmount(
       IERC20Detailed(repayParams.debtRepayAsset),
       repayParams.debtRepayMode,
@@ -71,10 +85,10 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.debtRepayAmount,
       msg.sender
     );
-    if (flashParams.flashLoanAmount == 0) {
+    if (repayParams.extraCollateralAsset == address(0)) {
       _swapAndRepay(repayParams, collateralATokenPermit, msg.sender);
     } else {
-      _flash(repayParams, flashParams, collateralATokenPermit);
+      _flash(repayParams, collateralATokenPermit, extraCollateralATokenPermit);
     }
     uint256 excessAfter = IERC20Detailed(repayParams.collateralAsset).balanceOf(address(this));
     uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
@@ -86,16 +100,16 @@ abstract contract ParaSwapRepayAdapter is
 
   function _flash(
     RepayParams memory repayParams,
-    FlashParams memory flashParams,
-    PermitInput memory collateralATokenPermit
+    PermitInput memory collateralATokenPermit,
+    PermitInput memory extraCollateralATokenPermit
   ) internal virtual {
-    bytes memory params = abi.encode(repayParams, flashParams, collateralATokenPermit);
+    bytes memory params = abi.encode(repayParams, collateralATokenPermit, extraCollateralATokenPermit, msg.sender);
     address[] memory assets = new address[](1);
-    assets[0] = flashParams.flashLoanAsset;
+    assets[0] = repayParams.extraCollateralAsset;
     uint256[] memory amounts = new uint256[](1);
-    amounts[0] = flashParams.flashLoanAmount;
+    amounts[0] = repayParams.extraCollateralAmount;
     uint256[] memory interestRateModes = new uint256[](1);
-    interestRateModes[0] = 0;
+    interestRateModes[0] = 2;
 
     POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
   }
@@ -122,26 +136,35 @@ abstract contract ParaSwapRepayAdapter is
 
     (
       RepayParams memory repayParams,
-      FlashParams memory flashParams,
-      PermitInput memory collateralATokenPermit
-    ) = abi.decode(params, (RepayParams, FlashParams, PermitInput));
+      PermitInput memory collateralATokenPermit,
+      PermitInput memory extraCollateralATokenPermit,
+      address user
+    ) = abi.decode(params, (RepayParams, PermitInput, PermitInput, address));
 
     address flashLoanAsset = assets[0];
     uint256 flashLoanAmount = amounts[0];
 
     // Supply
-    _supply(flashLoanAsset, flashLoanAmount, flashParams.user, REFERRER);
+    _supply(flashLoanAsset, flashLoanAmount, user, REFERRER);
 
-    _swapAndRepay(repayParams, collateralATokenPermit, flashParams.user);
+    _swapAndRepay(repayParams, collateralATokenPermit, user);
 
-    _pullATokenAndWithdraw(
+    uint256 amountWithdrawn = _pullATokenAndWithdraw(
       flashLoanAsset,
-      flashParams.user,
-      flashLoanAmount,
-      flashParams.flashLoanAssetPermit
+      user,
+      IERC20WithPermit(flashLoanAsset).balanceOf(msg.sender),
+      extraCollateralATokenPermit
     );
 
-    _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount);
+    _conditionalRenewAllowance(flashLoanAsset, amountWithdrawn);
+
+    //repay the flashloan taken on behalf of user
+    POOL.repay(
+      flashLoanAsset,
+      amountWithdrawn,
+      2,
+      user
+    );
 
     return true;
   }
@@ -205,7 +228,6 @@ abstract contract ParaSwapRepayAdapter is
     uint256 currentDebt = IERC20(debtToken).balanceOf(initiator);
 
     if (buyAllBalanceOffset != 0) {
-      require(currentDebt <= debtRepayAmount, 'INSUFFICIENT_AMOUNT_TO_REPAY');
       debtRepayAmount = currentDebt;
     } else {
       require(debtRepayAmount <= currentDebt, 'INVALID_DEBT_REPAY_AMOUNT');

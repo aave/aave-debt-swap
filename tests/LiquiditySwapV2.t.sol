@@ -50,7 +50,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
   }
 
   function test_revert_executeOperation_wrong_initiator() public {
-    vm.prank(address(AaveV2Ethereum.POOL));
+    vm.prank(address(AaveV3Ethereum.POOL));
     address[] memory mockAddresses = new address[](0);
     uint256[] memory mockAmounts = new uint256[](0);
 
@@ -248,7 +248,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
 
   function test_liquiditySwapFull_without_extra_collateral() public {
     uint256 daiSupplyAmount = 12000e18;
-    uint256 usdcSupplyAmount = 12000e18;
+    uint256 usdcSupplyAmount = 12000e6;
     uint256 borrowAmount = 80e18;
     
     address anotherCollateralAsset = AaveV2EthereumAssets.USDC_UNDERLYING;
@@ -314,17 +314,16 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     _invariant(address(liquiditySwapAdapter), collateralAsset, collateralAssetAToken);
   }
 
-  function test_liquiditySwap_with_extra_collateral(uint256 flashLoanAmount1) public {
+  function test_liquiditySwap_with_extra_collateral() public {
     uint256 supplyAmount = 12000e18;
     uint256 borrowAmount = 5000e18;
-    // uint256 flashLoanAmount = 2000e6;
+    uint256 flashLoanAmount = 2000e6;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
     address newCollateralAssetAToken = AaveV2EthereumAssets.LUSD_A_TOKEN;
     address flashLoanAsset = AaveV2EthereumAssets.USDC_UNDERLYING;
     address flashLoanAssetAToken = AaveV2EthereumAssets.USDC_A_TOKEN;
-    uint256 flashLoanAmount = bound(flashLoanAmount1, 2000e6, 1000_000e6);
     vm.startPrank(user);
 
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
@@ -389,8 +388,6 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
     _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
     _invariant(address(liquiditySwapAdapter), flashLoanAsset, flashLoanAssetAToken);
-
-
   }
 
 

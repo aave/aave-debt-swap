@@ -66,7 +66,6 @@ abstract contract ParaSwapRepayAdapter is
     FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) external nonReentrant {
-    uint256 excessBefore = IERC20Detailed(repayParams.collateralAsset).balanceOf(address(this));
     repayParams.debtRepayAmount = getDebtRepayAmount(
       IERC20Detailed(repayParams.debtRepayAsset),
       repayParams.debtRepayMode,
@@ -75,15 +74,16 @@ abstract contract ParaSwapRepayAdapter is
       msg.sender
     );
     if (flashParams.flashLoanAmount == 0) {
+      uint256 excessBefore = IERC20Detailed(repayParams.collateralAsset).balanceOf(address(this));
       _swapAndRepay(repayParams, collateralATokenPermit, msg.sender);
+      uint256 excessAfter = IERC20Detailed(repayParams.collateralAsset).balanceOf(address(this));
+      uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
+      if (excess > 0) {
+        _conditionalRenewAllowance(repayParams.collateralAsset, excess);
+        _supply(repayParams.collateralAsset, excess, msg.sender, REFERRER);
+    }
     } else {
       _flash(repayParams, flashParams, collateralATokenPermit);
-    }
-    uint256 excessAfter = IERC20Detailed(repayParams.collateralAsset).balanceOf(address(this));
-    uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
-    if (excess > 0) {
-      _conditionalRenewAllowance(repayParams.collateralAsset, excess);
-      _supply(repayParams.collateralAsset, excess, msg.sender, REFERRER);
     }
   }
 
@@ -132,16 +132,35 @@ abstract contract ParaSwapRepayAdapter is
     address flashLoanAsset = assets[0];
     uint256 flashLoanAmount = amounts[0];
 
-    // Supply
-    _supply(flashLoanAsset, flashLoanAmount, flashParams.user, REFERRER);
-    _swapAndRepay(repayParams, collateralATokenPermit, flashParams.user);
+    uint256 excessBefore = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
+    //swap the flashLoanAsset to debtRepaysset
+    uint256 amountSold = _buyOnParaSwap(
+      repayParams.offset,
+      repayParams.paraswapData,
+      IERC20Detailed(flashLoanAsset),
+      IERC20Detailed(repayParams.debtRepayAsset),
+      flashLoanAmount,
+      repayParams.debtRepayAmount
+    );
+    _conditionalRenewAllowance(repayParams.debtRepayAsset, repayParams.debtRepayAmount);
+    POOL.repay(
+      repayParams.debtRepayAsset,
+      repayParams.debtRepayAmount,
+      repayParams.debtRepayMode,
+      user
+    );
     _pullATokenAndWithdraw(
       flashLoanAsset,
       flashParams.user,
-      flashLoanAmount,
+      IERC20Detailed(flashLoanAsset).balanceOf(flashParams.user),
       flashParams.flashLoanAssetPermit
     );
-
+    uint256 excessAfter = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
+    uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
+    if (excess > 0) {
+      _conditionalRenewAllowance(repayParams.debtRepayAsset, excess);
+      _supply(repayParams.debtRepayAsset, excess, flashParams.user, REFERRER);
+    }
     _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount);
     return true;
   }
@@ -184,7 +203,7 @@ abstract contract ParaSwapRepayAdapter is
     uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
     if (excess > 0) {
       _conditionalRenewAllowance(repayParams.collateralAsset, excess);
-      _supply(repayParams.debtRepayAsset, excess, msg.sender, REFERRER);
+      _supply(repayParams.debtRepayAsset, excess, user, REFERRER);
     }
     return amountSold;
   }

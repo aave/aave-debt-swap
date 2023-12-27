@@ -365,7 +365,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
     IParaSwapLiquiditySwapAdapter.PermitInput memory flashLoanATokenPermit;
     IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams = IParaSwapLiquiditySwapAdapter.FlashParams({
-      pool: address(AaveV3Ethereum.POOL),
+      v3Pool: address(AaveV3Ethereum.POOL),
       flashLoanAsset: flashLoanAsset,
       flashLoanAmount: flashLoanAmount,
       user: user,

@@ -19,7 +19,7 @@ contract WithdrawSwapV3Test is BaseTest {
 
   function setUp() public override {
     super.setUp();
-    vm.createSelectFork(vm.rpcUrl('mainnet'), 18408300);
+    vm.createSelectFork(vm.rpcUrl('mainnet'), 18877385);
 
     withdrawSwapAdapter = new ParaSwapWithdrawSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Ethereum.POOL_ADDRESSES_PROVIDER)),

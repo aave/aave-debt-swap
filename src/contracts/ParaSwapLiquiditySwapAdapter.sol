@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
+import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
@@ -12,15 +11,13 @@ import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
-import {ICreditDelegationToken} from '../interfaces/ICreditDelegationToken.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapLiquiditySwapAdapter} from '../interfaces/IParaSwapLiquiditySwapAdapter.sol';
-import {AaveV3Ethereum} from 'aave-address-book/AaveV3Ethereum.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapter
  * @notice ParaSwap Adapter to perform a swap of debt to another debt.
- * @author BGD labs
+ * @author AAVE
  **/
 abstract contract ParaSwapLiquiditySwapAdapter is
   BaseParaSwapSellAdapter,
@@ -68,7 +65,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     if (liquiditySwapParams.offset != 0) {
       (, , address aToken) = _getReserveData(liquiditySwapParams.collateralAsset);
       uint256 balance = IERC20WithPermit(aToken).balanceOf(msg.sender);
-      // require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
+      require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
       liquiditySwapParams.collateralAmountToSwap = balance;
     }
     if (flashParams.flashLoanAmount == 0) {
@@ -91,7 +88,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    IPool(flashParams.v3Pool).flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+    POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
   }
 
   /**
@@ -100,6 +97,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
    *      enough funds to repay and has approved the Pool to pull the total amount
    * @param assets The addresses of the flash-borrowed assets
    * @param amounts The amounts of the flash-borrowed assets
+   * @param premiums The premiums of the flash-borrowed assets
    * @param initiator The address of the flashloan initiator
    * @param params The byte-encoded params passed when initiating the flashloan
    * @return True if the execution of the operation succeeds, false otherwise
@@ -111,7 +109,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     address initiator,
     bytes calldata params
   ) external returns (bool) {
-    require(msg.sender == address(AaveV3Ethereum.POOL), 'CALLER_MUST_BE_POOL');
+    require(msg.sender == address(POOL), 'CALLER_MUST_BE_POOL');
     require(initiator == address(this), 'INITIATOR_MUST_BE_THIS');
 
     (
@@ -122,13 +120,14 @@ abstract contract ParaSwapLiquiditySwapAdapter is
 
     address flashLoanAsset = assets[0];
     uint256 flashLoanAmount = amounts[0];
+    uint256 flashLoanPremium = premiums[0];
 
     uint256 amountReceived = _sellOnParaSwap(
       liquiditySwapParams.offset,
       liquiditySwapParams.paraswapData,
       IERC20Detailed(flashLoanAsset),
       IERC20Detailed(liquiditySwapParams.newCollateralAsset),
-      flashLoanAmount,
+      flashLoanAmount - flashLoanPremium,
       liquiditySwapParams.minNewCollateralAmount
     );
     _supply(liquiditySwapParams.newCollateralAsset, amountReceived, flashParams.user, REFERRER);
@@ -138,7 +137,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
       flashLoanAmount,
       flashParams.flashLoanAssetPermit
     );
-    _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount);
+    _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount + flashLoanPremium);
     return true;
   }
 

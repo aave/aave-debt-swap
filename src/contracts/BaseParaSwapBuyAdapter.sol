@@ -8,7 +8,6 @@ import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contr
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
-import "forge-std/Test.sol";
 
 /**
  * @title BaseParaSwapBuyAdapter

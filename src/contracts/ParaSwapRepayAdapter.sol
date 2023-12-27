@@ -11,17 +11,14 @@ import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
-import {ICreditDelegationToken} from '../interfaces/ICreditDelegationToken.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapRepayAdapter} from '../interfaces/IParaSwapRepayAdapter.sol';
 import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
-import {AaveV3Ethereum} from 'aave-address-book/AaveV3Ethereum.sol';
-import "forge-std/Test.sol";
 
 /**
- * @title ParaSwapLiquiditySwapAdapter
- * @notice ParaSwap Adapter to perform a swap of debt to another debt.
- * @author BGD labs
+ * @title ParaSwapRepayAdapter
+ * @notice ParaSwap Adapter to repay a debt of asset with collateral asset.
+ * @author AAVE
  **/
 abstract contract ParaSwapRepayAdapter is
   BaseParaSwapBuyAdapter,
@@ -100,7 +97,7 @@ abstract contract ParaSwapRepayAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    IPool(flashParams.v3Pool).flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+    POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
   }
 
   /**
@@ -109,6 +106,7 @@ abstract contract ParaSwapRepayAdapter is
    *      enough funds to repay and has approved the Pool to pull the total amount
    * @param assets The addresses of the flash-borrowed assets
    * @param amounts The amounts of the flash-borrowed assets
+   * @param premiums The premiums of the flash-borrowed assets
    * @param initiator The address of the flashloan initiator
    * @param params The byte-encoded params passed when initiating the flashloan
    * @return True if the execution of the operation succeeds, false otherwise
@@ -116,11 +114,11 @@ abstract contract ParaSwapRepayAdapter is
   function executeOperation(
     address[] calldata assets,
     uint256[] calldata amounts,
-    uint256[] calldata,
+    uint256[] calldata premiums,
     address initiator,
     bytes calldata params
   ) external returns (bool) {
-    require(msg.sender == address(AaveV3Ethereum.POOL), 'CALLER_MUST_BE_POOL');
+    require(msg.sender == address(POOL), 'CALLER_MUST_BE_POOL');
     require(initiator == address(this), 'INITIATOR_MUST_BE_THIS');
 
     (
@@ -131,6 +129,7 @@ abstract contract ParaSwapRepayAdapter is
 
     address flashLoanAsset = assets[0];
     uint256 flashLoanAmount = amounts[0];
+    uint256 flashLoanPremium = premiums[0];
 
     uint256 excessBefore = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
     //swap the flashLoanAsset to debtRepaysset
@@ -147,12 +146,12 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.debtRepayAsset,
       repayParams.debtRepayAmount,
       repayParams.debtRepayMode,
-      user
+      flashParams.user
     );
     _pullATokenAndWithdraw(
       flashLoanAsset,
       flashParams.user,
-      IERC20Detailed(flashLoanAsset).balanceOf(flashParams.user),
+      flashLoanAmount + flashLoanPremium - (flashLoanAmount - amountSold), //(flashLoanAmount - amountSold) is the amount remaining in the contract after buy order on paraswap.
       flashParams.flashLoanAssetPermit
     );
     uint256 excessAfter = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
@@ -161,7 +160,7 @@ abstract contract ParaSwapRepayAdapter is
       _conditionalRenewAllowance(repayParams.debtRepayAsset, excess);
       _supply(repayParams.debtRepayAsset, excess, flashParams.user, REFERRER);
     }
-    _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount);
+    _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount + flashLoanPremium);
     return true;
   }
 
@@ -223,9 +222,8 @@ abstract contract ParaSwapRepayAdapter is
 
     uint256 currentDebt = IERC20(debtToken).balanceOf(initiator);
 
-    console.log(currentDebt);
-
     if (buyAllBalanceOffset != 0) {
+      require(currentDebt <= debtRepayAmount, 'INSUFFICIENT_AMOUNT_TO_REPAY');
       debtRepayAmount = currentDebt;
     } else {
       require(debtRepayAmount <= currentDebt, 'INVALID_DEBT_REPAY_AMOUNT');

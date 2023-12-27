@@ -10,7 +10,7 @@ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 
 /**
  * @title ParaSwapRepayAdapterV3
- * @notice ParaSwap Adapter to perform a withdrawal of asset and swapping it to another asset.
+ * @notice ParaSwap Adapter to repay a debt of asset with collateral asset.
  **/
 contract ParaSwapRepayAdapterV3 is ParaSwapRepayAdapter {
   /**

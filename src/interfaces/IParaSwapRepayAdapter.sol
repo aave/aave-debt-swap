@@ -5,7 +5,6 @@ import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 
 interface IParaSwapRepayAdapter is IBaseParaSwapAdapter {
   struct FlashParams {
-    address v3Pool;
     address flashLoanAsset;
     uint256 flashLoanAmount;
     address user;
@@ -23,7 +22,7 @@ interface IParaSwapRepayAdapter is IBaseParaSwapAdapter {
   }
 
   /**
-   * @dev swaps liquidity(collateral) from one asset to another asset. Repays the debt of received asset from swap.
+   * @dev swaps liquidity(collateral) from one asset to another asset to repay the debt of received asset from swap.
    * @param repayParams struct describing the repay with collateral swap
    * @param flashParams optional struct describing flashloan params if needed
    * @param collateralATokenPermit optional permit for collateral aToken

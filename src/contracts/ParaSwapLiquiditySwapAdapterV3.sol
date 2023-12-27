@@ -11,7 +11,7 @@ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapterV3
- * @notice ParaSwap Adapter to perform a withdrawal of asset and swapping it to another asset.
+ * @notice ParaSwap Adapter to perform a swapping of one collateral asset to another collateral asset.
  **/
 contract ParaSwapLiquiditySwapAdapterV3 is ParaSwapLiquiditySwapAdapter {
   /**

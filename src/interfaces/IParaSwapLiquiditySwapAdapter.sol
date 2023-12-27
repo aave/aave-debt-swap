@@ -5,7 +5,6 @@ import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 
 interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
   struct FlashParams {
-    address v3Pool;
     address flashLoanAsset;
     uint256 flashLoanAmount;
     address user;

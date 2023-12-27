@@ -14,6 +14,9 @@ import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
 import {ICreditDelegationToken} from '../interfaces/ICreditDelegationToken.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapRepayAdapter} from '../interfaces/IParaSwapRepayAdapter.sol';
+import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
+import {AaveV3Ethereum} from 'aave-address-book/AaveV3Ethereum.sol';
+import "forge-std/Test.sol";
 
 /**
  * @title ParaSwapLiquiditySwapAdapter
@@ -97,7 +100,7 @@ abstract contract ParaSwapRepayAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+    IPool(flashParams.v3Pool).flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
   }
 
   /**
@@ -117,7 +120,7 @@ abstract contract ParaSwapRepayAdapter is
     address initiator,
     bytes calldata params
   ) external returns (bool) {
-    require(msg.sender == address(POOL), 'CALLER_MUST_BE_POOL');
+    require(msg.sender == address(AaveV3Ethereum.POOL), 'CALLER_MUST_BE_POOL');
     require(initiator == address(this), 'INITIATOR_MUST_BE_THIS');
 
     (
@@ -131,9 +134,7 @@ abstract contract ParaSwapRepayAdapter is
 
     // Supply
     _supply(flashLoanAsset, flashLoanAmount, flashParams.user, REFERRER);
-
     _swapAndRepay(repayParams, collateralATokenPermit, flashParams.user);
-
     _pullATokenAndWithdraw(
       flashLoanAsset,
       flashParams.user,
@@ -142,7 +143,6 @@ abstract contract ParaSwapRepayAdapter is
     );
 
     _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount);
-
     return true;
   }
 
@@ -204,8 +204,9 @@ abstract contract ParaSwapRepayAdapter is
 
     uint256 currentDebt = IERC20(debtToken).balanceOf(initiator);
 
+    console.log(currentDebt);
+
     if (buyAllBalanceOffset != 0) {
-      require(currentDebt <= debtRepayAmount, 'INSUFFICIENT_AMOUNT_TO_REPAY');
       debtRepayAmount = currentDebt;
     } else {
       require(debtRepayAmount <= currentDebt, 'INVALID_DEBT_REPAY_AMOUNT');

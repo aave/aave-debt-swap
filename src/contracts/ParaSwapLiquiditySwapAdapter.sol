@@ -91,7 +91,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    IPool(flashParams.pool).flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+    IPool(flashParams.v3Pool).flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
   }
 
   /**
@@ -123,23 +123,22 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     address flashLoanAsset = assets[0];
     uint256 flashLoanAmount = amounts[0];
 
-    // Supply to the pool
-    _supply(flashLoanAsset, flashLoanAmount, flashParams.user, REFERRER);
-
-    _swapAndDeposit(liquiditySwapParams, collateralATokenPermit, flashParams.user);
-    console.log("111");
+    uint256 amountReceived = _sellOnParaSwap(
+      liquiditySwapParams.offset,
+      liquiditySwapParams.paraswapData,
+      IERC20Detailed(flashLoanAsset),
+      IERC20Detailed(liquiditySwapParams.newCollateralAsset),
+      flashLoanAmount,
+      liquiditySwapParams.minNewCollateralAmount
+    );
+    _supply(liquiditySwapParams.newCollateralAsset, amountReceived, flashParams.user, REFERRER);
     _pullATokenAndWithdraw(
       flashLoanAsset,
       flashParams.user,
       flashLoanAmount,
       flashParams.flashLoanAssetPermit
     );
-
     _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount);
-    uint256 allowance = IERC20(flashLoanAsset).allowance(address(this), address(AaveV3Ethereum.POOL));
-     IERC20WithPermit(flashLoanAsset).safeApprove(address(AaveV3Ethereum.POOL), 0);
-    IERC20WithPermit(flashLoanAsset).safeApprove(address(AaveV3Ethereum.POOL), type(uint256).max);
-
     return true;
   }
 

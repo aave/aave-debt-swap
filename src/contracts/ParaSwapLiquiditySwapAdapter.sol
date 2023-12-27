@@ -16,7 +16,7 @@ import {IParaSwapLiquiditySwapAdapter} from '../interfaces/IParaSwapLiquiditySwa
 
 /**
  * @title ParaSwapLiquiditySwapAdapter
- * @notice ParaSwap Adapter to perform a swap of debt to another debt.
+ * @notice ParaSwap Adapter to perform a swapping of one collateral asset to another collateral asset.
  * @author AAVE
  **/
 abstract contract ParaSwapLiquiditySwapAdapter is

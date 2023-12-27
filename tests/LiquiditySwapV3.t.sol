@@ -316,13 +316,13 @@ contract LiquiditySwapAdapterV3 is BaseTest {
   function test_liquiditySwap_with_extra_collateral() public {
     uint256 supplyAmount = 12000e18;
     uint256 borrowAmount = 5000e18;
-    uint256 flashLoanAmount = 2000e6;
+    uint256 flashLoanAmount = 2000e18;
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
     address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
-    address flashLoanAsset = AaveV3EthereumAssets.USDC_UNDERLYING;
-    address flashLoanAssetAToken = AaveV3EthereumAssets.USDC_A_TOKEN;
+    address flashLoanAsset = collateralAsset;
+    address flashLoanAssetAToken = collateralAssetAToken;
     vm.startPrank(user);
 
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
@@ -348,9 +348,6 @@ contract LiquiditySwapAdapterV3 is BaseTest {
       collateralAmountToSwap
     );
 
-    IERC20Detailed(flashLoanAssetAToken).approve(address(liquiditySwapAdapter), flashLoanAmount);
-
-
     IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
       memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
         collateralAsset: collateralAsset,
@@ -364,7 +361,6 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
     IParaSwapLiquiditySwapAdapter.PermitInput memory flashLoanATokenPermit;
     IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams = IParaSwapLiquiditySwapAdapter.FlashParams({
-      v3Pool: address(AaveV3Ethereum.POOL),
       flashLoanAsset: flashLoanAsset,
       flashLoanAmount: flashLoanAmount,
       user: user,

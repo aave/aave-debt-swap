@@ -7,7 +7,6 @@ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAd
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {Errors} from 'aave-address-book/AaveV2.sol';
 import {AaveV2Ethereum, AaveV2EthereumAssets, ILendingPool} from 'aave-address-book/AaveV2Ethereum.sol';
-import {AaveV3Ethereum} from 'aave-address-book/AaveV3Ethereum.sol';
 import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapLiquiditySwapAdapterV2} from '../src/contracts/ParaSwapLiquiditySwapAdapterV2.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
@@ -15,6 +14,7 @@ import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
 import {IParaSwapLiquiditySwapAdapter} from '../src/interfaces/IParaSwapLiquiditySwapAdapter.sol';
 import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
+import "forge-std/Test.sol";
 
 contract LiquiditySwapAdapterV2 is BaseTest {
   ParaSwapLiquiditySwapAdapterV2 internal liquiditySwapAdapter;
@@ -29,8 +29,6 @@ contract LiquiditySwapAdapterV2 is BaseTest {
       AugustusRegistry.ETHEREUM,
       AaveGovernanceV2.SHORT_EXECUTOR
     );
-    vm.startPrank(0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A); //ACL admin
-    IACLManager(address(AaveV3Ethereum.ACL_MANAGER)).addFlashBorrower(address(liquiditySwapAdapter));
     vm.stopPrank();
 
   }
@@ -50,7 +48,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
   }
 
   function test_revert_executeOperation_wrong_initiator() public {
-    vm.prank(address(AaveV3Ethereum.POOL));
+    vm.prank(address(AaveV2Ethereum.POOL));
     address[] memory mockAddresses = new address[](0);
     uint256[] memory mockAmounts = new uint256[](0);
 
@@ -316,14 +314,14 @@ contract LiquiditySwapAdapterV2 is BaseTest {
 
   function test_liquiditySwap_with_extra_collateral() public {
     uint256 supplyAmount = 12000e18;
-    uint256 borrowAmount = 5000e18;
-    uint256 flashLoanAmount = 2000e6;
+    uint256 borrowAmount = 6000e18;
+    uint256 flashLoanAmount = 2000e18;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
     address newCollateralAssetAToken = AaveV2EthereumAssets.LUSD_A_TOKEN;
-    address flashLoanAsset = AaveV2EthereumAssets.USDC_UNDERLYING;
-    address flashLoanAssetAToken = AaveV2EthereumAssets.USDC_A_TOKEN;
+    address flashLoanAsset = collateralAsset;
+    address flashLoanAssetAToken = collateralAssetAToken;
     vm.startPrank(user);
 
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
@@ -333,12 +331,11 @@ contract LiquiditySwapAdapterV2 is BaseTest {
       user
     );
 
-    // Swap liquidity(collateral)
     uint256 collateralAmountToSwap = 2000e18;
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       newCollateralAsset,
-      collateralAmountToSwap,
+      (collateralAmountToSwap * 9991)/10_000, //taking flashloan premium into account
       user,
       true,
       false
@@ -349,13 +346,10 @@ contract LiquiditySwapAdapterV2 is BaseTest {
       collateralAmountToSwap
     );
 
-    IERC20Detailed(flashLoanAssetAToken).approve(address(liquiditySwapAdapter), flashLoanAmount);
-
-
     IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
       memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
         collateralAsset: collateralAsset,
-        collateralAmountToSwap: collateralAmountToSwap,
+        collateralAmountToSwap:(collateralAmountToSwap * 9991)/10_000, //taking flashloan premium into account
         newCollateralAsset: newCollateralAsset,
         minNewCollateralAmount: 2000e18,
         offset: psp.offset,
@@ -365,7 +359,6 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
     IParaSwapLiquiditySwapAdapter.PermitInput memory flashLoanATokenPermit;
     IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams = IParaSwapLiquiditySwapAdapter.FlashParams({
-      v3Pool: address(AaveV3Ethereum.POOL),
       flashLoanAsset: flashLoanAsset,
       flashLoanAmount: flashLoanAmount,
       user: user,
@@ -381,13 +374,12 @@ contract LiquiditySwapAdapterV2 is BaseTest {
       _withinRange(
         collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
         collateralAmountToSwap,
-        2
+        1e15 //flashloan premium is added to the pool
       )
     );
     }
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
     _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
-    _invariant(address(liquiditySwapAdapter), flashLoanAsset, flashLoanAssetAToken);
   }
 
 

@@ -4,6 +4,10 @@ pragma solidity ^0.8.10;
 import {BaseParaSwapAdapter} from '../contracts/BaseParaSwapAdapter.sol';
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 
+/**
+ * @title ParaSwapWithdrawSwapAdapter
+ * @notice ParaSwap Adapter to perform a withdrawal of asset and swapping it to another asset.
+ **/
 interface IParaSwapWithdrawSwapAdapter is IBaseParaSwapAdapter {
   struct WithdrawSwapParams {
     address oldAsset;

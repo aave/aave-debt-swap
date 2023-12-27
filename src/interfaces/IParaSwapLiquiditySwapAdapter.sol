@@ -3,6 +3,10 @@ pragma solidity ^0.8.10;
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 
+/**
+ * @title ParaSwapLiquiditySwapAdapterV3
+ * @notice ParaSwap Adapter to perform a swapping of one collateral asset to another collateral asset.
+ **/
 interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
   struct FlashParams {
     address flashLoanAsset;

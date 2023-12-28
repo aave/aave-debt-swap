@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {SafeMath} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeMath.sol';
 import {PercentageMath} from '@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
@@ -26,14 +25,14 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
     IParaSwapAugustusRegistry augustusRegistry
   ) BaseParaSwapAdapter(addressesProvider, pool) {
     // Do something on Augustus registry to check the right contract was passed
-    require(!augustusRegistry.isValidAugustus(address(0)));
+    require(!augustusRegistry.isValidAugustus(address(0)), 'Not a valid Augustus address');
     AUGUSTUS_REGISTRY = augustusRegistry;
   }
 
   /**
    * @dev Swaps a token for another using ParaSwap
    * @param fromAmountOffset Offset of fromAmount in Augustus calldata if it should be overwritten, otherwise 0
-   * @param paraswapData Calldata for ParaSwap's AugustusSwapper contract
+   * @param paraswapData Data for Paraswap Adapter
    * @param assetToSwapFrom Address of the asset to be swapped from
    * @param assetToSwapTo Address of the asset to be swapped to
    * @param amountToSwap Amount to be swapped
@@ -100,7 +99,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
       }
     }
     require(
-      assetToSwapFrom.balanceOf(address(this)) == balanceBeforeAssetFrom - amountToSwap,
+      amountToSwap == balanceBeforeAssetFrom - assetToSwapFrom.balanceOf(address(this)),
       'WRONG_BALANCE_AFTER_SWAP'
     );
     amountReceived = assetToSwapTo.balanceOf(address(this)) - balanceBeforeAssetTo;

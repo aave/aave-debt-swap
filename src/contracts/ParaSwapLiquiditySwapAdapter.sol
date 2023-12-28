@@ -17,7 +17,7 @@ import {IParaSwapLiquiditySwapAdapter} from '../interfaces/IParaSwapLiquiditySwa
 /**
  * @title ParaSwapLiquiditySwapAdapter
  * @notice ParaSwap Adapter to perform a swapping of one collateral asset to another collateral asset.
- * @author AAVE
+ * @author Aave Labs
  **/
 abstract contract ParaSwapLiquiditySwapAdapter is
   BaseParaSwapSellAdapter,
@@ -62,12 +62,14 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) external nonReentrant {
+    // Offset in August calldata if wanting to swap all balance, otherwise 0
     if (liquiditySwapParams.offset != 0) {
       (, , address aToken) = _getReserveData(liquiditySwapParams.collateralAsset);
       uint256 balance = IERC20WithPermit(aToken).balanceOf(msg.sender);
       require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
       liquiditySwapParams.collateralAmountToSwap = balance;
     }
+    // Non-zero amount if wanting to flashloan, otherwise 0
     if (flashParams.flashLoanAmount == 0) {
       _swapAndDeposit(liquiditySwapParams, collateralATokenPermit, msg.sender);
     } else {
@@ -88,7 +90,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+    POOL.flashLoan(address(this), assets, amounts, interestRateModes, address(this), params, REFERRER);
   }
 
   /**
@@ -169,7 +171,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
 
     _conditionalRenewAllowance(liquiditySwapParams.newCollateralAsset, amountReceived);
 
-    _supply(liquiditySwapParams.newCollateralAsset, amountReceived, user, 0);
+    _supply(liquiditySwapParams.newCollateralAsset, amountReceived, user, REFERRER);
     return amountReceived;
   }
 

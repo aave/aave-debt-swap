@@ -18,7 +18,7 @@ import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 /**
  * @title ParaSwapRepayAdapter
  * @notice ParaSwap Adapter to repay a debt of asset with collateral asset.
- * @author AAVE
+ * @author Aave Labs
  **/
 abstract contract ParaSwapRepayAdapter is
   BaseParaSwapBuyAdapter,
@@ -97,7 +97,7 @@ abstract contract ParaSwapRepayAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+    POOL.flashLoan(address(this), assets, amounts, interestRateModes, address(this), params, REFERRER);
   }
 
   /**
@@ -132,7 +132,7 @@ abstract contract ParaSwapRepayAdapter is
     uint256 flashLoanPremium = premiums[0];
 
     uint256 excessBefore = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
-    //swap the flashLoanAsset to debtRepaysset
+    //swap the flashLoanAsset to debtRepayAsset
     uint256 amountSold = _buyOnParaSwap(
       repayParams.offset,
       repayParams.paraswapData,

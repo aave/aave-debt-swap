@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {ParaSwapLiquiditySwapAdapter} from './ParaSwapLiquiditySwapAdapter.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
+import {ParaSwapLiquiditySwapAdapter} from './ParaSwapLiquiditySwapAdapter.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapterV2

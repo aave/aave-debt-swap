@@ -5,29 +5,33 @@ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/
 import {IACLManager} from '@aave/core-v3/contracts/interfaces/IACLManager.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
-import {Errors} from 'aave-address-book/AaveV2.sol';
-import {AaveV2Ethereum, AaveV2EthereumAssets, ILendingPool} from 'aave-address-book/AaveV2Ethereum.sol';
+import {Errors} from 'aave-address-book/AaveV3.sol';
+import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/AaveV3Ethereum.sol';
 import {BaseTest} from './utils/BaseTest.sol';
-import {ParaSwapRepayAdapterV2} from '../src/contracts/ParaSwapRepayAdapterV2.sol';
+import {ParaSwapRepayAdapterV3} from '../src/contracts/ParaSwapRepayAdapterV3.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
 import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
 import {IParaSwapRepayAdapter} from '../src/interfaces/IParaSwapRepayAdapter.sol';
 import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
+import "forge-std/Test.sol";
 
-contract RepayAdapterV2 is BaseTest {
-  ParaSwapRepayAdapterV2 internal repayAdapter;
+contract RepayAdapterV3 is BaseTest {
+  ParaSwapRepayAdapterV3 internal repayAdapter;
 
   function setUp() public override {
     super.setUp();
     vm.createSelectFork(vm.rpcUrl('mainnet'), 18883410);
 
-    repayAdapter = new ParaSwapRepayAdapterV2(
-      IPoolAddressesProvider(address(AaveV2Ethereum.POOL_ADDRESSES_PROVIDER)),
-      address(AaveV2Ethereum.POOL),
+    repayAdapter = new ParaSwapRepayAdapterV3(
+      IPoolAddressesProvider(address(AaveV3Ethereum.POOL_ADDRESSES_PROVIDER)),
+      address(AaveV3Ethereum.POOL),
       AugustusRegistry.ETHEREUM,
       AaveGovernanceV2.SHORT_EXECUTOR
     );
+    vm.stopPrank();
+    vm.startPrank(0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A); //ACL admin
+    IACLManager(address(AaveV3Ethereum.ACL_MANAGER)).addFlashBorrower(address(repayAdapter));
     vm.stopPrank();
   }
 
@@ -46,7 +50,7 @@ contract RepayAdapterV2 is BaseTest {
   }
 
   function test_revert_executeOperation_wrong_initiator() public {
-    vm.prank(address(AaveV2Ethereum.POOL));
+    vm.prank(address(AaveV3Ethereum.POOL));
     address[] memory mockAddresses = new address[](0);
     uint256[] memory mockAmounts = new uint256[](0);
 
@@ -62,21 +66,21 @@ contract RepayAdapterV2 is BaseTest {
 
   function test_repay_without_extra_collateral() public {
     uint256 supplyAmount = 120e18;
-    uint256 borrowAmount = 80e18;
+    uint256 borrowAmount = 70e18;
     // We want to end with LT > utilisation > LTV, so we pump up the utilisation to 75% by withdrawing (80 > 75 > 67).
     uint256 withdrawAmount = supplyAmount - (borrowAmount * 100) / 75;
-    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
-    address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
-    address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+    address debtAssetVToken = AaveV3EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
 
-    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
-    _borrow(AaveV2Ethereum.POOL, borrowAmount, debtAsset);
+    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV3Ethereum.POOL, borrowAmount, debtAsset);
 
-    vm.expectRevert(bytes(Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW));
-    _borrow(AaveV2Ethereum.POOL, 25e18, debtAsset);
+    vm.expectRevert(bytes(Errors.COLLATERAL_CANNOT_COVER_NEW_BORROW));
+    _borrow(AaveV3Ethereum.POOL, 25e18, debtAsset);
 
     uint256 maxCollateralAmountToSwap = 25e18;
     uint256 debtRepayAmount = 22e18;
@@ -132,21 +136,21 @@ contract RepayAdapterV2 is BaseTest {
 
   function test_repay_permit_without_extra_collateral() public {
     uint256 supplyAmount = 120e18;
-    uint256 borrowAmount = 80e18;
+    uint256 borrowAmount = 70e18;
     // We want to end with LT > utilisation > LTV, so we pump up the utilisation to 75% by withdrawing (80 > 75 > 67).
     uint256 withdrawAmount = supplyAmount - (borrowAmount * 100) / 75;
-    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
-    address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
-    address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+    address debtAssetVToken = AaveV3EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
 
-    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
-    _borrow(AaveV2Ethereum.POOL, borrowAmount, debtAsset);
+    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV3Ethereum.POOL, borrowAmount, debtAsset);
 
-    vm.expectRevert(bytes(Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW));
-    _borrow(AaveV2Ethereum.POOL, 25e18, debtAsset);
+    vm.expectRevert(bytes(Errors.COLLATERAL_CANNOT_COVER_NEW_BORROW));
+    _borrow(AaveV3Ethereum.POOL, 25e18, debtAsset);
 
     uint256 maxCollateralAmountToSwap = 25e18;
     uint256 debtRepayAmount = 22e18;
@@ -204,15 +208,15 @@ contract RepayAdapterV2 is BaseTest {
     uint256 daiSupplyAmount = 12000e18;
     uint256 lusdBorrowAmount = 1000e18;
     
-    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
-    address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
-    address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+    address debtAssetVToken = AaveV3EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
 
-    _supply(AaveV2Ethereum.POOL, daiSupplyAmount, collateralAsset);
-    _borrow(AaveV2Ethereum.POOL, lusdBorrowAmount, debtAsset);
+    _supply(AaveV3Ethereum.POOL, daiSupplyAmount, collateralAsset);
+    _borrow(AaveV3Ethereum.POOL, lusdBorrowAmount, debtAsset);
 
     uint256 maxCollateralAssetToSwap = 1050e18;
     PsPResponse memory psp = _fetchPSPRoute(
@@ -268,15 +272,15 @@ contract RepayAdapterV2 is BaseTest {
   function test_repay_full_with_flashloan() public {
     uint256 daiSupplyAmount = 12000e18;
     
-    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
-    address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
-    address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+    address debtAssetVToken = AaveV3EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
     uint256 lusdBorrowAmount = 1000e18;
-    _supply(AaveV2Ethereum.POOL, daiSupplyAmount, collateralAsset);
-    _borrow(AaveV2Ethereum.POOL, lusdBorrowAmount, debtAsset);
+    _supply(AaveV3Ethereum.POOL, daiSupplyAmount, collateralAsset);
+    _borrow(AaveV3Ethereum.POOL, lusdBorrowAmount, debtAsset);
 
     uint256 maxDebtAssetToSwap = 1050e18;
     PsPResponse memory psp = _fetchPSPRoute(
@@ -332,22 +336,21 @@ contract RepayAdapterV2 is BaseTest {
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
   }
 
-  function _supply(ILendingPool pool, uint256 amount, address asset) internal {
+  function _supply(IPool pool, uint256 amount, address asset) internal {
     deal(asset, user, amount);
     IERC20Detailed(asset).approve(address(pool), amount);
     pool.deposit(asset, amount, user, 0);
   }
 
-  function _borrow(ILendingPool pool, uint256 amount, address asset) internal {
+  function _borrow(IPool pool, uint256 amount, address asset) internal {
     pool.borrow(asset, amount, 2, 0, user);
   }
 
-  function _withdraw(ILendingPool pool, uint256 amount, address asset) internal {
+  function _withdraw(IPool pool, uint256 amount, address asset) internal {
     pool.withdraw(asset, amount, user);
   }
 
   function _withinRange(uint256 a, uint256 b, uint256 diff) internal returns (bool) {
     return stdMath.delta(a, b) <= diff;
   }
-
 }

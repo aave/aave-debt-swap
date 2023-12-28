@@ -175,7 +175,7 @@ abstract contract ParaSwapRepayAdapter is
     PermitInput memory collateralATokenPermit,
     address user
   ) internal returns (uint256) {
-    _pullATokenAndWithdraw(
+    uint256 collateralAmountReceived = _pullATokenAndWithdraw(
       repayParams.collateralAsset,
       user,
       repayParams.maxCollateralAmountToSwap,
@@ -187,7 +187,7 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.paraswapData,
       IERC20Detailed(repayParams.collateralAsset),
       IERC20Detailed(repayParams.debtRepayAsset),
-      repayParams.maxCollateralAmountToSwap,
+      collateralAmountReceived,
       repayParams.debtRepayAmount
     );
 

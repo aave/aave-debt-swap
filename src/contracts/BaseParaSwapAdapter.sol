@@ -120,13 +120,8 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
 
     uint256 reserveATokenBalanceReceived = IERC20(reserveAToken).balanceOf(address(this)) -
       reserveATokenBalanceBefore;
-
     // withdraw reserve
-    require(
-      POOL.withdraw(reserve, reserveATokenBalanceReceived, address(this)) ==
-        reserveATokenBalanceReceived,
-      'UNEXPECTED_AMOUNT_WITHDRAWN'
-    );
+    POOL.withdraw(reserve, reserveATokenBalanceReceived, address(this));
     return reserveATokenBalanceReceived;
   }
 

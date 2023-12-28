@@ -318,7 +318,6 @@ contract RepayAdapterV2 is BaseTest {
     );
     IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
     IParaSwapRepayAdapter.FlashParams memory flashParams = IParaSwapRepayAdapter.FlashParams({
-      v3Pool: address(AaveV3Ethereum.POOL),
       flashLoanAsset: flashLoanAsset,
       flashLoanAmount: flashLoanAmount,
       user: user,

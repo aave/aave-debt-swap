@@ -130,7 +130,7 @@ contract RepayAdapterV3 is BaseTest {
       )
     );
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
-    _invariant(address(repayAdapter), collateralAsset, debtAsset);
+    _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
   }
 
@@ -200,7 +200,7 @@ contract RepayAdapterV3 is BaseTest {
       )
     );
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
-    _invariant(address(repayAdapter), collateralAsset, debtAsset);
+    _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
   }
 
@@ -265,7 +265,7 @@ contract RepayAdapterV3 is BaseTest {
     );
     assertTrue(debtTokenBalanceAfter == 0);
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
-    _invariant(address(repayAdapter), collateralAsset, debtAsset);
+    _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
   }
 
@@ -332,7 +332,7 @@ contract RepayAdapterV3 is BaseTest {
     );
     assertTrue(debtTokenBalanceAfter == 0);
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
-    _invariant(address(repayAdapter), collateralAsset, debtAsset);
+    _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
   }
 

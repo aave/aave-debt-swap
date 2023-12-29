@@ -131,7 +131,6 @@ abstract contract ParaSwapRepayAdapter is
     uint256 flashLoanAmount = amounts[0];
     uint256 flashLoanPremium = premiums[0];
 
-    uint256 excessBefore = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
     //swap the flashLoanAsset to debtRepayAsset
     uint256 amountSold = _buyOnParaSwap(
       repayParams.offset,
@@ -154,12 +153,6 @@ abstract contract ParaSwapRepayAdapter is
       flashLoanAmount + flashLoanPremium - (flashLoanAmount - amountSold), //(flashLoanAmount - amountSold) is the amount remaining in the contract after buy order on paraswap.
       flashParams.flashLoanAssetPermit
     );
-    uint256 excessAfter = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
-    uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
-    if (excess > 0) {
-      _conditionalRenewAllowance(repayParams.debtRepayAsset, excess);
-      _supply(repayParams.debtRepayAsset, excess, flashParams.user, REFERRER);
-    }
     _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount + flashLoanPremium);
     return true;
   }
@@ -181,7 +174,6 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.maxCollateralAmountToSwap,
       collateralATokenPermit
     );
-    uint256 excessBefore = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
     uint256 amountSold = _buyOnParaSwap(
       repayParams.offset,
       repayParams.paraswapData,
@@ -198,12 +190,6 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.debtRepayMode,
       user
     );
-    uint256 excessAfter = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
-    uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
-    if (excess > 0) {
-      _conditionalRenewAllowance(repayParams.collateralAsset, excess);
-      _supply(repayParams.debtRepayAsset, excess, user, REFERRER);
-    }
     return amountSold;
   }
 

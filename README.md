@@ -1,6 +1,10 @@
 # BGD labs <> Aave Debt Swap Adapter
 
-This repository contains the [ParaSwapDebtSwapAdapter](./src/contracts/ParaSwapDebtSwapAdapter.sol), which aims to allow users to arbitrage borrow APY and exit illiquid debt positions.
+This repository contains the [ParaSwapDebtSwapAdapter](./src/contracts/ParaSwapDebtSwapAdapter.sol), [ParaSwapLiquidityAdapter](./s, rc/contracts/ParaSwapLiquidityAdapter.sol), [ParaSwapRepayAdapter](./src/contracts/ParaSwapRepayAdapter.sol) and [ParaSwapWithdrawAdapter](./src/contracts/ParaSwapWithdrawAdapter.sol)
+
+## ParaSwapDebtSwapAdapter
+
+ParaSwapDebtSwapAdapter aims to allow users to arbitrage borrow APY and exit illiquid debt positions.
 Therefore, this contract is able to swap one debt position to another debt position - either partially or completely.
 
 You could for example swap your `1000 BUSD` debt to `max(1010 USDC)` debt.
@@ -90,6 +94,167 @@ struct CreditDelegationInput {
 ```
 
 The third one describes the (optional) collateral aToken permit:
+
+```solidity
+struct PermitInput {
+  IERC20WithPermit aToken;
+  uint256 value;
+  uint256 deadline;
+  uint8 v;
+  bytes32 r;
+  bytes32 s;
+}
+```
+
+## ParaSwapLiquidityAdapter
+
+ParaSwapLiquidityAdapter aims to allow users to arbitrage supply APY.
+Therefore, this contract is able to swap one collateral position to another collateral position - either partially or completely.
+
+You could for example swap your `1000 BUSD` collateral to `min(995 USDC)` collateral.
+In order to perform this task, `swapLiquidity`:
+
+1. Pulls the `1000 aBUSD` token from user and withdraws `1000 BUSD` from pool. (requires `aToken` approval)
+2. It then swaps the collateral asset to the new collateral asset via exact in swap (meaning it will send `1000 BUSD` for the swap but may receive `995 USDC`)
+3. Supplies the received `995 USDC`` to the pool on behalf of user and user receives `995 aUSDC`.
+
+The user has now swapped off his `1000 BUSD` collateral position, and created a new `995 USDC` collateral position.
+
+In situations where a user's real loan-to-value (LTV) is higher than their maximum LTV but lower than their liquidation threshold (LT), extra collateral is needed in the steps outlined above. The flow would then look like this(assuming flashloan premium as `0.09%`):
+
+1. Create a standard, repayable flashloan with the collateral asset(`BUSD`) and amount equals to the collateral to swap(`1000`).
+2. Swap the collateral asset with amount excluding the flashloan premium(`1000 BUSD` - flashloan premium = `999.1 BUSD`) to the new collateral asset(`USDC`). 
+3. Deposit the `USDC` received in step 2 as a collateral in the pool on behalf of user.
+4. Pull the `1000 aBUSD` from the user and withdraws `1000 BUSD` from the pool.  (requires `aToken` approval)
+5. Repay `1000 BUSD` flashloan and `0.9 BUSD` premium.
+
+The `function swapLiquidity(LiquiditySwapParams memory liquiditySwapParams, FlashParams memory flashParams, PermitInput memory collateralATokenPermit)` expects three parameters.
+
+The first one describes the swap:
+
+```solidity
+struct LiquiditySwapParams {
+    address collateralAsset;  // the asset you want to swap collateral from
+    uint256 collateralAmountToSwap; // the amount you want to swap from
+    address newCollateralAsset; // the asset you want to swap collateral to
+    uint256 minNewCollateralAmount; // the minimum amount of new collateral asset to be received
+    uint256 offset; // offset in calldata in case of all collateral is to be swapped
+    bytes paraswapData; // encoded exactIn swap
+  }
+```
+
+The second one describes the (optional) flashParams:
+
+```solidity
+struct FlashParams {
+    address flashLoanAsset; // the asset to flashloan(collateralAsset)
+    uint256 flashLoanAmount; // the amount to flashloan(collateralAmountToSwap)
+    address user; // the user wanting to swap the collateral
+    PermitInput flashLoanAssetPermit; // the permit for flashLoanAsset's aToken for flashLoanAmount
+  }
+```
+
+The third one describes the (optional) collateral aToken permit:
+
+```solidity
+struct PermitInput {
+  IERC20WithPermit aToken;
+  uint256 value;
+  uint256 deadline;
+  uint8 v;
+  bytes32 r;
+  bytes32 s;
+}
+```
+
+## ParaSwapRepayAdapter
+
+ParaSwapRepayAdapter aims to allow users to repay the borrow position using collateral position.
+Therefore, this contract is able to swap one collateral position to repay borrow position - either partially or completely.
+
+You could for example swap your `max(1000 BUSD)` collateral to repay `(995 USDC)` borrow position.
+In order to perform this task, `repayWithCollateral`:
+
+1. Pulls the `1000 aBUSD` token from user and withdraws `1000 BUSD` from pool. (requires `aToken` approval)
+2. It then swaps the collateral asset to the borrow asset via exact out swap (meaning it will send `max(1000 BUSD)` for the swap but receive exact `995 USDC`)
+3. Repays the received `995 USDC` to the pool on behalf of user.
+
+The user has now swapped off his `1000 BUSD` collateral position, and repayed a `995 USDC` borrow position.
+
+In situations where a user's real loan-to-value (LTV) is higher than their maximum LTV but lower than their liquidation threshold (LT), extra collateral is needed in the steps outlined above. The flow would then look like this(assuming flashloan premium as `0.09%`):
+
+1. Create a standard, repayable flashloan with the collateral asset(`BUSD`) with value equivalent to the value to be repaid of borrowed asset.
+2. Swap the collateral asset with amount received to the borrowed asset(`USDC`) using exactOut. 
+3. Repays the exact `USDC` received in step 2 in the pool on behalf of user.
+4. Pull the `aBUSD` from the user equivalent to the value of (flashloan + premium - unutilized flashloan asset in step 2).  (requires `aToken` approval)
+5. Repays the flashloan alongwith premium.
+
+The `function repayWithCollateral(RepayParams memory repayParams, FlashParams memory flashParams, PermitInput memory collateralATokenPermit)` expects three parameters.
+
+The first one describes the repay params:
+
+```solidity
+struct RepayParams {
+    address collateralAsset; // the asset you want to swap collateral from
+    uint256 maxCollateralAmountToSwap; // the max amount you want to swap from
+    address debtRepayAsset; // the asset you want to repay the debt
+    uint256 debtRepayAmount; // the amount of debt to be paid
+    uint256 debtRepayMode; // the type of debt (1 for stable, 2 for variable)
+    uint256 offset; // offset in calldata in case of all collateral is to be swapped
+    bytes paraswapData; // encoded exactOut swap
+  }
+```
+
+The second one describes the (optional) flashParams:
+
+```solidity
+struct FlashParams {
+    address flashLoanAsset; // the asset to flashloan(collateralAsset)
+    uint256 flashLoanAmount; // the amount to flashloan equivalent to the debt to be repaid
+    address user; // the user wanting to swap the collateral to repay debt
+    PermitInput flashLoanAssetPermit; // the permit for flashLoanAsset's aToken for flashLoanAmount
+  }
+```
+
+The third one describes the (optional) collateral aToken permit:
+
+```solidity
+struct PermitInput {
+  IERC20WithPermit aToken;
+  uint256 value;
+  uint256 deadline;
+  uint8 v;
+  bytes32 r;
+  bytes32 s;
+}
+```
+
+## ParaSwapWithdrawSwapAdapter
+
+ParaSwapRepayAdapter aims to allow users to withdraw their collateral and swap the received collateral asset to other asset.
+
+You could for example withdraw your `(1000 BUSD)` collateral and convert the received collateral to `min(995 USDC)`.
+In order to perform this task, `withdrawAndSwap`:
+
+1. Pulls the `1000 aBUSD` token from user and withdraws `1000 BUSD` from pool. (requires `aToken` approval)
+2. It then swaps the BUSD to the USDC via exact in swap (meaning it will send `(1000 BUSD)` for the swap but receive `min(995 USDC)`)
+
+The `function withdrawAndSwap(WithdrawSwapParams memory withdrawSwapParams, PermitInput memory permitInput)` expects two parameters.
+
+The first one describes the withdraw params:
+
+```solidity
+struct WithdrawSwapParams {
+    address oldAsset; // the asset you want withdraw and swap from
+    uint256 oldAssetAmount; // the amount you want to withdraw
+    address newAsset; // the asset you want to swap to
+    uint256 minAmountToReceive; // the minimum amount you expect to receive
+    uint256 allBalanceOffset; // offset in calldata in case of all the asset to withdraw
+    bytes paraswapData; // encoded exactIn swap
+  }
+```
+
+The second one describes the (optional) collateral aToken permit:
 
 ```solidity
 struct PermitInput {

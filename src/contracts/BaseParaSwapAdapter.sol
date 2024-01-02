@@ -18,15 +18,21 @@ import {IBaseParaSwapAdapter} from '../interfaces/IBaseParaSwapAdapter.sol';
  */
 abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseParaSwapAdapter {
   using SafeERC20 for IERC20;
-  using SafeERC20 for IERC20Detailed;
 
+  // TODO: Create function and docs in interface
   // Max slippage percent allowed
   uint256 public constant MAX_SLIPPAGE_PERCENT = 3000; // 30%
 
+  // TODO: Create function and docs in interface
   IPriceOracleGetter public immutable ORACLE;
+
+  /// @inheritdoc IFlashLoanReceiverBase
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
+
+  /// @inheritdoc IFlashLoanReceiverBase
   IPool public immutable POOL;
 
+  // TODO: Move to interface
   event Swapped(
     address indexed fromAsset,
     address indexed toAsset,
@@ -40,16 +46,31 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
     uint256 receivedAmount
   );
 
+  /**
+   * @dev Constructor
+   * @param addressesProvider The address of the Aave PoolAddressesProvider contract
+   * @param pool The address of the Aave Pool contract
+   */
   constructor(IPoolAddressesProvider addressesProvider, address pool) {
     ORACLE = IPriceOracleGetter(addressesProvider.getPriceOracle());
     ADDRESSES_PROVIDER = addressesProvider;
     POOL = IPool(pool);
   }
 
+  // TODO: Move to interface
   /**
-   * @dev Get the price of the asset from the oracle denominated in eth
-   * @param asset address
-   * @return eth price for the asset
+   * @dev Emergency rescue for token stucked on this contract, as failsafe mechanism
+   * - Funds should never remain in this contract more time than during transactions
+   * - Only callable by the owner
+   */
+  function rescueTokens(IERC20 token) external onlyOwner {
+    token.safeTransfer(owner(), token.balanceOf(address(this)));
+  }
+
+  /**
+   * @dev Get the price of the asset from the oracle
+   * @param asset The address of the asset
+   * @return The price of the asset, based on the oracle denomination units
    */
   function _getPrice(address asset) internal view returns (uint256) {
     return ORACLE.getAssetPrice(asset);
@@ -57,6 +78,7 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
 
   /**
    * @dev Get the decimals of an asset
+   * @param asset The address of the asset
    * @return number of decimals of the asset
    */
   function _getDecimals(IERC20Detailed asset) internal view returns (uint8) {
@@ -67,27 +89,27 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
   }
 
   /**
-   * @dev Get the vToken, sToken associated to the asset
-   * @return address of the vToken
-   * @return address of the sToken
-   * @return address of the aToken
+   * @dev Get the vToken, sToken and aToken associated to the asset
+   * @return address The address of the VariableDebtToken, vToken
+   * @return address The address of the StableDebtToken, sToken
+   * @return address The address of the aToken
    */
   function _getReserveData(address asset) internal view virtual returns (address, address, address);
 
   /**
-   * @dev Supply "amount" of "asset" to Aave
-   * @param asset Address of the asset to be supplied
-   * @param amount Amount of the asset to be supplied
-   * @param to Address receiving the aTokens
-   * @param referralCode Referral code to pass to Aave
+   * @dev Supply an amount of "asset to the Aave Pool
+   * @param asset The address of the asset to be supplied
+   * @param amount The amount of the asset to be supplied
+   * @param to The address receiving the aTokens
+   * @param referralCode The referral code to pass to Aave
    */
   function _supply(address asset, uint256 amount, address to, uint16 referralCode) internal virtual;
 
   /**
-   * @dev Pull the ATokens from the user and withdraws the underlying asset from the POOL
-   * @param reserve address of the asset
-   * @param user address
-   * @param amount of tokens to be transferred to the contract
+   * @dev Pull the ATokens from the user and withdraws the underlying asset from the Aave Pool
+   * @param reserve The address of the asset
+   * @param user The address of the user to pull aTokens from
+   * @param amount The amount of tokens to be pulled and withdrawn
    * @param permitInput struct containing the permit signature
    */
   function _pullATokenAndWithdraw(
@@ -120,14 +142,5 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
     // withdraw reserve
     POOL.withdraw(reserve, reserveATokenBalanceReceived, address(this));
     return reserveATokenBalanceReceived;
-  }
-
-  /**
-   * @dev Emergency rescue for token stucked on this contract, as failsafe mechanism
-   * - Funds should never remain in this contract more time than during transactions
-   * - Only callable by the owner
-   */
-  function rescueTokens(IERC20 token) external onlyOwner {
-    token.safeTransfer(owner(), token.balanceOf(address(this)));
   }
 }

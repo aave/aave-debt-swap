@@ -26,7 +26,7 @@ contract ParaSwapRepayAdapterV2 is ParaSwapRepayAdapter {
     address owner
   ) ParaSwapRepayAdapter(addressesProvider, pool, augustusRegistry, owner) {}
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _getReserveData(
     address asset
   ) internal view override returns (address, address, address) {
@@ -38,7 +38,7 @@ contract ParaSwapRepayAdapterV2 is ParaSwapRepayAdapter {
     );
   }
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _supply(
     address asset,
     uint256 amount,

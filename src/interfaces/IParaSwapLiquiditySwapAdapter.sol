@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
-import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
+
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 
 /**
- * @title ParaSwapLiquiditySwapAdapterV3
- * @notice ParaSwap Adapter to perform a swapping of one collateral asset to another collateral asset.
+ * @title IParaSwapLiquiditySwapAdapter
+ * @notice Defines the basic interface for ParaSwapLiquiditySwapAdapter
  **/
 interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
   struct FlashParams {
@@ -19,14 +19,14 @@ interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
     address collateralAsset;
     uint256 collateralAmountToSwap;
     address newCollateralAsset;
-    uint256 minNewCollateralAmount;
+    uint256 newCollateralAmount;
     uint256 offset;
     bytes paraswapData;
   }
 
   /**
    * @dev swaps liquidity(collateral) from one asset to another
-   * @param liquiditySwapParams struct describing the liqudity swap
+   * @param liquiditySwapParams struct describing the liquidity swap
    * @param flashParams optional struct describing flashloan params if needed
    * @param collateralATokenPermit optional permit for collateral aToken
    */

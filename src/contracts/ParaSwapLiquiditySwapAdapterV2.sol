@@ -14,9 +14,9 @@ import {ParaSwapLiquiditySwapAdapter} from './ParaSwapLiquiditySwapAdapter.sol';
 contract ParaSwapLiquiditySwapAdapterV2 is ParaSwapLiquiditySwapAdapter {
   /**
    * @dev Constructor
-   * @param addressesProvider The address for a Pool Addresses Provider.
-   * @param pool The address of the Aave Pool
-   * @param augustusRegistry address of ParaSwap Augustus Registry
+   * @param addressesProvider The address of the Aave PoolAddressesProvider contract
+   * @param pool The address of the Aave Pool contract
+   * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
    * @param owner The address to transfer ownership to
    */
   constructor(
@@ -24,9 +24,11 @@ contract ParaSwapLiquiditySwapAdapterV2 is ParaSwapLiquiditySwapAdapter {
     address pool,
     IParaSwapAugustusRegistry augustusRegistry,
     address owner
-  ) ParaSwapLiquiditySwapAdapter(addressesProvider, pool, augustusRegistry, owner) {}
+  ) ParaSwapLiquiditySwapAdapter(addressesProvider, pool, augustusRegistry, owner) {
+    // Intentionally left blank
+  }
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _getReserveData(
     address asset
   ) internal view override returns (address, address, address) {
@@ -38,7 +40,7 @@ contract ParaSwapLiquiditySwapAdapterV2 is ParaSwapLiquiditySwapAdapter {
     );
   }
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _supply(
     address asset,
     uint256 amount,

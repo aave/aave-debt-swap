@@ -26,7 +26,7 @@ contract ParaSwapWithdrawSwapAdapterV3 is ParaSwapWithdrawSwapAdapter {
     address owner
   ) ParaSwapWithdrawSwapAdapter(addressesProvider, pool, augustusRegistry, owner) {}
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _getReserveData(
     address asset
   ) internal view override returns (address, address, address) {
@@ -38,7 +38,7 @@ contract ParaSwapWithdrawSwapAdapterV3 is ParaSwapWithdrawSwapAdapter {
     );
   }
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _supply(
     address asset,
     uint256 amount,

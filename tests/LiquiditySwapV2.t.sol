@@ -106,7 +106,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: 25e18,
+        newCollateralAmount: 25e18,
         offset: psp.offset,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
@@ -157,7 +157,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: 900e18,
+        newCollateralAmount: 900e18,
         offset: psp.offset,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
@@ -216,7 +216,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: 900e18,
+        newCollateralAmount: 900e18,
         offset: psp.offset,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
@@ -287,7 +287,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: daiSupplyAmount,
+        newCollateralAmount: daiSupplyAmount,
         offset: psp.offset,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
@@ -351,7 +351,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap:(collateralAmountToSwap * 9991)/10_000, //taking flashloan premium into account
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: 2000e18,
+        newCollateralAmount: 2000e18,
         offset: psp.offset,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });

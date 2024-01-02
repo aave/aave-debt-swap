@@ -137,7 +137,7 @@ struct LiquiditySwapParams {
     address collateralAsset;  // the asset you want to swap collateral from
     uint256 collateralAmountToSwap; // the amount you want to swap from
     address newCollateralAsset; // the asset you want to swap collateral to
-    uint256 minNewCollateralAmount; // the minimum amount of new collateral asset to be received
+    uint256 newCollateralAmount; // the minimum amount of new collateral asset to be received
     uint256 offset; // offset in calldata in case of all collateral is to be swapped
     bytes paraswapData; // encoded exactIn swap
   }

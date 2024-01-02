@@ -19,6 +19,12 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
 
   IParaSwapAugustusRegistry public immutable AUGUSTUS_REGISTRY;
 
+  /**
+   * @dev Constructor
+   * @param addressesProvider The address of the Aave PoolAddressesProvider contract
+   * @param pool The address of the Aave Pool contract
+   * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
+   */
   constructor(
     IPoolAddressesProvider addressesProvider,
     address pool,
@@ -30,7 +36,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
   }
 
   /**
-   * @dev Swaps a token for another using ParaSwap
+   * @dev Swaps a token for another using ParaSwap (exact in)
    * @param fromAmountOffset Offset of fromAmount in Augustus calldata if it should be overwritten, otherwise 0
    * @param paraswapData Data for Paraswap Adapter
    * @param assetToSwapFrom Address of the asset to be swapped from
@@ -99,7 +105,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
       }
     }
     require(
-      amountToSwap == balanceBeforeAssetFrom - assetToSwapFrom.balanceOf(address(this)),
+      balanceBeforeAssetFrom - assetToSwapFrom.balanceOf(address(this)) <= amountToSwap,
       'WRONG_BALANCE_AFTER_SWAP'
     );
     amountReceived = assetToSwapTo.balanceOf(address(this)) - balanceBeforeAssetTo;

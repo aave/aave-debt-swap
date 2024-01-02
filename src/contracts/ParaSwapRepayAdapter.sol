@@ -3,17 +3,15 @@ pragma solidity ^0.8.10;
 
 import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
-import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
+import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
+import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
-import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapRepayAdapter} from '../interfaces/IParaSwapRepayAdapter.sol';
-import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
+import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
 
 /**
  * @title ParaSwapRepayAdapter
@@ -26,7 +24,7 @@ abstract contract ParaSwapRepayAdapter is
   IFlashLoanReceiver,
   IParaSwapRepayAdapter
 {
-  using SafeERC20 for IERC20WithPermit;
+  using SafeERC20 for IERC20;
 
   // unique identifier to track usage via flashloan events
   uint16 public constant REFERRER = 13410; // uint16(uint256(keccak256(abi.encode('repay-swap-adapter'))) / type(uint16).max)
@@ -48,56 +46,40 @@ abstract contract ParaSwapRepayAdapter is
     // set initial approval for all reserves
     address[] memory reserves = POOL.getReservesList();
     for (uint256 i = 0; i < reserves.length; i++) {
-      IERC20WithPermit(reserves[i]).safeApprove(address(POOL), type(uint256).max);
+      IERC20(reserves[i]).safeApprove(address(POOL), type(uint256).max);
     }
   }
 
   function renewAllowance(address reserve) public {
-    IERC20WithPermit(reserve).safeApprove(address(POOL), 0);
-    IERC20WithPermit(reserve).safeApprove(address(POOL), type(uint256).max);
+    IERC20(reserve).safeApprove(address(POOL), 0);
+    IERC20(reserve).safeApprove(address(POOL), type(uint256).max);
   }
 
-  ///@inheritdoc IParaSwapRepayAdapter
+  /// @inheritdoc IParaSwapRepayAdapter
   function repayWithCollateral(
     RepayParams memory repayParams,
     FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) external nonReentrant {
     repayParams.debtRepayAmount = getDebtRepayAmount(
-      IERC20Detailed(repayParams.debtRepayAsset),
+      IERC20(repayParams.debtRepayAsset),
       repayParams.debtRepayMode,
       repayParams.offset,
       repayParams.debtRepayAmount,
       msg.sender
     );
     if (flashParams.flashLoanAmount == 0) {
-      uint256 excessBefore = IERC20Detailed(repayParams.collateralAsset).balanceOf(address(this));
+      uint256 excessBefore = IERC20(repayParams.collateralAsset).balanceOf(address(this));
       _swapAndRepay(repayParams, collateralATokenPermit, msg.sender);
-      uint256 excessAfter = IERC20Detailed(repayParams.collateralAsset).balanceOf(address(this));
+      uint256 excessAfter = IERC20(repayParams.collateralAsset).balanceOf(address(this));
       uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
       if (excess > 0) {
         _conditionalRenewAllowance(repayParams.collateralAsset, excess);
         _supply(repayParams.collateralAsset, excess, msg.sender, REFERRER);
-    }
+      }
     } else {
       _flash(repayParams, flashParams, collateralATokenPermit);
     }
-  }
-
-  function _flash(
-    RepayParams memory repayParams,
-    FlashParams memory flashParams,
-    PermitInput memory collateralATokenPermit
-  ) internal virtual {
-    bytes memory params = abi.encode(repayParams, flashParams, collateralATokenPermit);
-    address[] memory assets = new address[](1);
-    assets[0] = flashParams.flashLoanAsset;
-    uint256[] memory amounts = new uint256[](1);
-    amounts[0] = flashParams.flashLoanAmount;
-    uint256[] memory interestRateModes = new uint256[](1);
-    interestRateModes[0] = 0;
-
-    POOL.flashLoan(address(this), assets, amounts, interestRateModes, address(this), params, REFERRER);
   }
 
   /**
@@ -190,11 +172,43 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.debtRepayMode,
       user
     );
+
     return amountSold;
   }
 
+  function _flash(
+    RepayParams memory repayParams,
+    FlashParams memory flashParams,
+    PermitInput memory collateralATokenPermit
+  ) internal virtual {
+    address[] memory assets = new address[](1);
+    assets[0] = flashParams.flashLoanAsset;
+    uint256[] memory amounts = new uint256[](1);
+    amounts[0] = flashParams.flashLoanAmount;
+    uint256[] memory interestRateModes = new uint256[](1);
+    interestRateModes[0] = 0;
+    bytes memory params = abi.encode(repayParams, flashParams, collateralATokenPermit);
+
+    POOL.flashLoan(
+      address(this),
+      assets,
+      amounts,
+      interestRateModes,
+      address(this),
+      params,
+      REFERRER
+    );
+  }
+
+  function _conditionalRenewAllowance(address asset, uint256 minAmount) internal {
+    uint256 allowance = IERC20(asset).allowance(address(this), address(POOL));
+    if (allowance < minAmount) {
+      renewAllowance(asset);
+    }
+  }
+
   function getDebtRepayAmount(
-    IERC20Detailed debtAsset,
+    IERC20 debtAsset,
     uint256 rateMode,
     uint256 buyAllBalanceOffset,
     uint256 debtRepayAmount,
@@ -216,12 +230,5 @@ abstract contract ParaSwapRepayAdapter is
     }
 
     return debtRepayAmount;
-  }
-
-  function _conditionalRenewAllowance(address asset, uint256 minAmount) internal {
-    uint256 allowance = IERC20(asset).allowance(address(this), address(POOL));
-    if (allowance < minAmount) {
-      renewAllowance(asset);
-    }
   }
 }

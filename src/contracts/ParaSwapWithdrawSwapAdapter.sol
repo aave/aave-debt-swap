@@ -3,9 +3,9 @@ pragma solidity ^0.8.10;
 
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
-import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {GPv2SafeERC20} from '@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
+import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapWithdrawSwapAdapter} from '../interfaces/IParaSwapWithdrawSwapAdapter.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
@@ -13,20 +13,22 @@ import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 
 /**
  * @title ParaSwapWithdrawSwapAdapter
- * @notice ParaSwap Adapter to perform a withdrawal of asset and swapping it to another asset.
+ * @notice Implements the logic of withdrawing the asset from Aave pool and swapping it to other asset
+ * @dev Withdraws the asset from Aave pool. Swaps(exact in) the withdrawn asset to another asset and transfers to the user
+ * @author Aave Labs
  **/
 abstract contract ParaSwapWithdrawSwapAdapter is
   BaseParaSwapSellAdapter,
   ReentrancyGuard,
   IParaSwapWithdrawSwapAdapter
 {
-  using GPv2SafeERC20 for IERC20;
+  using SafeERC20 for IERC20;
 
   /**
    * @dev Constructor
-   * @param addressesProvider The address for a Pool Addresses Provider.
-   * @param pool The address of the Aave Pool
-   * @param augustusRegistry address of ParaSwap Augustus Registry
+   * @param addressesProvider The address of the Aave PoolAddressesProvider contract
+   * @param pool The address of the Aave Pool contract
+   * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
    * @param owner The address to transfer ownership to
    */
   constructor(
@@ -58,6 +60,7 @@ abstract contract ParaSwapWithdrawSwapAdapter is
       permitInput
     );
 
+    // sell(exact in) withdrawn asset(oldAsset) from Aave pool to other asset(newAsset)
     uint256 amountReceived = _sellOnParaSwap(
       withdrawSwapParams.allBalanceOffset,
       withdrawSwapParams.paraswapData,

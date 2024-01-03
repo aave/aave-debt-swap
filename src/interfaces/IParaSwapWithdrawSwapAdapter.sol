@@ -5,17 +5,18 @@ import {BaseParaSwapAdapter} from '../contracts/BaseParaSwapAdapter.sol';
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 
 /**
- * @title ParaSwapWithdrawSwapAdapter
- * @notice ParaSwap Adapter to perform a withdrawal of asset and swapping it to another asset.
+ * @title IParaSwapWithdrawSwapAdapter
+ * @notice Defines the basic interface for ParaSwapWithdrawSwapAdapter
+ * @dev Implement this interface to provide functionality of withdrawing the asset from Aave pool and swapping it to another asset
  **/
 interface IParaSwapWithdrawSwapAdapter is IBaseParaSwapAdapter {
   struct WithdrawSwapParams {
-    address oldAsset;
-    uint256 oldAssetAmount;
-    address newAsset;
-    uint256 minAmountToReceive;
-    uint256 allBalanceOffset;
-    bytes paraswapData;
+    address oldAsset; // the asset you want withdraw and swap from
+    uint256 oldAssetAmount;  // the amount you want to withdraw
+    address newAsset;  // the asset you want to swap to
+    uint256 minAmountToReceive; // the minimum amount you expect to receive
+    uint256 allBalanceOffset; // offset in calldata in case of all the asset to withdraw
+    bytes paraswapData; // encoded exactIn swap
   }
 
   /**

@@ -10,14 +10,14 @@ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 
 /**
  * @title ParaSwapRepayAdapterV3
- * @notice ParaSwap Adapter to repay a debt of asset with collateral asset.
+ * @notice Provides the functionality of ParaSwapRepayAdapter for Aave V3 pool
  **/
 contract ParaSwapRepayAdapterV3 is ParaSwapRepayAdapter {
   /**
    * @dev Constructor
-   * @param addressesProvider The address for a Pool Addresses Provider.
-   * @param pool The address of the Aave Pool
-   * @param augustusRegistry address of ParaSwap Augustus Registry
+   * @param addressesProvider The address of the Aave PoolAddressesProvider contract
+   * @param pool The address of the Aave Pool contract
+   * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
    * @param owner The address to transfer ownership to
    */
   constructor(
@@ -27,7 +27,7 @@ contract ParaSwapRepayAdapterV3 is ParaSwapRepayAdapter {
     address owner
   ) ParaSwapRepayAdapter(addressesProvider, pool, augustusRegistry, owner) {}
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _getReserveData(
     address asset
   ) internal view override returns (address, address, address) {
@@ -39,7 +39,7 @@ contract ParaSwapRepayAdapterV3 is ParaSwapRepayAdapter {
     );
   }
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _supply(
     address asset,
     uint256 amount,

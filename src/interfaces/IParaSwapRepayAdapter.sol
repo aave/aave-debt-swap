@@ -4,26 +4,25 @@ import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IE
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 
 /**
- * @title ParaSwapRepayAdapter
- * @notice ParaSwap Adapter to repay a debt of asset with collateral asset.
- * @author AAVE
+ * @title IParaSwapRepayAdapter
+ * @notice Defines the basic interface for ParaSwapRepayAdapter
+ * @dev Implement this interface to provide functionality of swapping one collateral asset to debt asset and repay the debt
  **/
 interface IParaSwapRepayAdapter is IBaseParaSwapAdapter {
   struct FlashParams {
-    address flashLoanAsset;
-    uint256 flashLoanAmount;
-    address user;
-    PermitInput flashLoanAssetPermit;
+    address flashLoanAsset; // the asset to flashloan(collateralAsset)
+    uint256 flashLoanAmount; // the amount to flashloan equivalent to the debt to be repaid
   }
 
   struct RepayParams {
-    address collateralAsset;
-    uint256 maxCollateralAmountToSwap;
-    address debtRepayAsset;
-    uint256 debtRepayAmount;
-    uint256 debtRepayMode;
-    uint256 offset;
-    bytes paraswapData;
+    address collateralAsset; // the asset you want to swap collateral from
+    uint256 maxCollateralAmountToSwap; // the max amount you want to swap from
+    address debtRepayAsset; // the asset you want to repay the debt
+    uint256 debtRepayAmount; // the amount of debt to be paid
+    uint256 debtRepayMode; // the type of debt (1 for stable, 2 for variable)
+    uint256 offset; // offset in calldata in case of all collateral is to be swapped
+    address user; // address of user
+    bytes paraswapData; // encoded exactOut swap
   }
 
   /**

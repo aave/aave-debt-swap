@@ -9,14 +9,14 @@ import {ParaSwapWithdrawSwapAdapter} from './ParaSwapWithdrawSwapAdapter.sol';
 
 /**
  * @title ParaSwapWithdrawSwapAdapterV2
- * @notice ParaSwap Adapter to perform a withdrawal of asset and swapping it to another asset.
+ * @notice Provides the functionality of ParaSwapWithdrawSwapAdapter for Aave V2 pool
  **/
 contract ParaSwapWithdrawSwapAdapterV2 is ParaSwapWithdrawSwapAdapter {
   /**
    * @dev Constructor
-   * @param addressesProvider The address for a Pool Addresses Provider.
-   * @param pool The address of the Aave Pool
-   * @param augustusRegistry address of ParaSwap Augustus Registry
+   * @param addressesProvider The address of the Aave PoolAddressesProvider contract
+   * @param pool The address of the Aave Pool contract
+   * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
    * @param owner The address to transfer ownership to
    */
   constructor(
@@ -26,7 +26,7 @@ contract ParaSwapWithdrawSwapAdapterV2 is ParaSwapWithdrawSwapAdapter {
     address owner
   ) ParaSwapWithdrawSwapAdapter(addressesProvider, pool, augustusRegistry, owner) {}
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _getReserveData(
     address asset
   ) internal view override returns (address, address, address) {
@@ -38,7 +38,7 @@ contract ParaSwapWithdrawSwapAdapterV2 is ParaSwapWithdrawSwapAdapter {
     );
   }
 
-  ///@inheritdoc BaseParaSwapAdapter
+  /// @inheritdoc BaseParaSwapAdapter
   function _supply(
     address asset,
     uint256 amount,

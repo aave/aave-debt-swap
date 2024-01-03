@@ -12,7 +12,14 @@ import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
  * @dev Implement this interface to develop a flashloan-compatible flashLoanReceiver contract
  **/
 interface IFlashLoanReceiverBase {
+
+  /**
+   * @return The address of the Aave PoolAddressesProvider contract 
+   */
   function ADDRESSES_PROVIDER() external view returns (IPoolAddressesProvider);
 
+  /**
+   * @return The address of the Aave pool contract 
+   */
   function POOL() external view returns (IPool);
 }

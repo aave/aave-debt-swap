@@ -107,6 +107,7 @@ contract RepayAdapterV3 is BaseTest {
         debtRepayAmount: debtRepayAmount,
         debtRepayMode: 2,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -173,6 +174,7 @@ contract RepayAdapterV3 is BaseTest {
         debtRepayAmount: debtRepayAmount,
         debtRepayMode: 2,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -241,6 +243,7 @@ contract RepayAdapterV3 is BaseTest {
         debtRepayAmount: debtRepayAmount,
         debtRepayMode: 2,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -304,14 +307,13 @@ contract RepayAdapterV3 is BaseTest {
         debtRepayAmount: lusdBorrowAmount,
         debtRepayMode: 2,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
     IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
     IParaSwapRepayAdapter.FlashParams memory flashParams = IParaSwapRepayAdapter.FlashParams({
           flashLoanAsset: collateralAsset,
-          flashLoanAmount: (lusdBorrowAmount*105)/100,
-          user: user,
-          flashLoanAssetPermit: collateralATokenPermit
+          flashLoanAmount: (lusdBorrowAmount*105)/100
         });    
 
     uint256 debtTokenBalanceBefore = IERC20Detailed(debtAssetVToken).balanceOf(user);

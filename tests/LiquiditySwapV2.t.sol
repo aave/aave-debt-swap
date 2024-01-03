@@ -106,8 +106,9 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: 25e18,
+        newCollateralAmount: 25e18,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -157,8 +158,9 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: 900e18,
+        newCollateralAmount: 900e18,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -216,8 +218,9 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: 900e18,
+        newCollateralAmount: 900e18,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -287,8 +290,9 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: daiSupplyAmount,
+        newCollateralAmount: daiSupplyAmount,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -351,8 +355,9 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap:(collateralAmountToSwap * 9991)/10_000, //taking flashloan premium into account
         newCollateralAsset: newCollateralAsset,
-        minNewCollateralAmount: 2000e18,
+        newCollateralAmount: 2000e18,
         offset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -360,9 +365,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     IParaSwapLiquiditySwapAdapter.PermitInput memory flashLoanATokenPermit;
     IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams = IParaSwapLiquiditySwapAdapter.FlashParams({
       flashLoanAsset: flashLoanAsset,
-      flashLoanAmount: flashLoanAmount,
-      user: user,
-      flashLoanAssetPermit: collateralATokenPermit
+      flashLoanAmount: flashLoanAmount
     });
 
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);

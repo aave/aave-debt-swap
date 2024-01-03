@@ -11,7 +11,7 @@ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 
 /**
  * @title BaseParaSwapSellAdapter
- * @notice Implements the logic for selling tokens on ParaSwap
+ * @notice Implements the logic for selling tokens(exact in) on ParaSwap
  */
 abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
   using SafeERC20 for IERC20Detailed;
@@ -19,6 +19,12 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
 
   IParaSwapAugustusRegistry public immutable AUGUSTUS_REGISTRY;
 
+  /**
+   * @dev Constructor
+   * @param addressesProvider The address of the Aave PoolAddressesProvider contract
+   * @param pool The address of the Aave Pool contract
+   * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
+   */
   constructor(
     IPoolAddressesProvider addressesProvider,
     address pool,
@@ -30,7 +36,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
   }
 
   /**
-   * @dev Swaps a token for another using ParaSwap
+   * @dev Swaps a token for another using ParaSwap (exact in)
    * @param fromAmountOffset Offset of fromAmount in Augustus calldata if it should be overwritten, otherwise 0
    * @param paraswapData Data for Paraswap Adapter
    * @param assetToSwapFrom Address of the asset to be swapped from

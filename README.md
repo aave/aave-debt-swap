@@ -1,6 +1,11 @@
-# BGD labs <> Aave Debt Swap Adapter
+# Aave ParaSwap Adapters
 
-This repository contains the [ParaSwapDebtSwapAdapter](./src/contracts/ParaSwapDebtSwapAdapter.sol), [ParaSwapLiquidityAdapter](./s, rc/contracts/ParaSwapLiquidityAdapter.sol), [ParaSwapRepayAdapter](./src/contracts/ParaSwapRepayAdapter.sol) and [ParaSwapWithdrawAdapter](./src/contracts/ParaSwapWithdrawAdapter.sol)
+This repository contains adapter contracts for ParaSwap:
+
+- [ParaSwapDebtSwapAdapter](./src/contracts/ParaSwapDebtSwapAdapter.sol)
+- [ParaSwapLiquidityAdapter](./src/contracts/ParaSwapLiquidityAdapter.sol)
+- [ParaSwapRepayAdapter](./src/contracts/ParaSwapRepayAdapter.sol)
+- [ParaSwapWithdrawAdapter](./src/contracts/ParaSwapWithdrawAdapter.sol)
 
 ## ParaSwapDebtSwapAdapter
 
@@ -11,8 +16,8 @@ You could for example swap your `1000 BUSD` debt to `max(1010 USDC)` debt.
 In order to perform this task, `swapDebt`:
 
 1. Creates a flashLoan with variable debt mode with the **target debt**(`1010 USDC`) on behalf of the user
-   - On aave v2 you need to approve the debtSwapAdapter for credit delegation
-   - On aave v3 you can also pass a credit delegation permit
+   - On Aave V2 you need to approve the debtSwapAdapter for credit delegation
+   - On Aave V3 you can also pass a credit delegation permit
 2. It then swaps the flashed assets to the underlying of the **current debt**(`1000 BUSD`) via exact out swap (meaning it will receive `1000 BUSD`, but might only need `1000.1 USDC` for the swap)
 3. Repays the **current debt** (`1000 BUSD`)
 4. Uses potential (`9.9 USDC`) to repay parts of the newly created **target debt**
@@ -21,25 +26,27 @@ The user has now payed off his `1000 BUSD` debt position, and created a new `100
 
 In situations where a user's real loan-to-value (LTV) is higher than their maximum LTV but lower than their liquidation threshold (LT), extra collateral is needed to "wrap" around the flashloan-and-swap outlined above. The flow would then look like this:
 
-1. Create a standard, repayable flashloan with the specified extra collateral asset and amount
-2. Supply the flashed collateral on behalf of the user
-3. Create the variable debt flashloan with the **target debt**(`1010 USDC`) on behalf of the user
-4. Swap the flashloaned target debt asset to the underlying of the **current debt**(`1000 BUSD`), needing only `1000.1 USDC`
-5. Repay the **current debt** (`1000 BUSD`)
-6. Repay the flashloaned collateral asset and premium if needed (requires `aToken` approval)
-7. Use the remaining new debt asset (`9.9 USDC`) to repay parts of the newly created **target debt**
+1. Creates a standard, repayable flashloan with the specified extra collateral asset and amount
+2. Supplies the flashed collateral on behalf of the user
+3. Creates the variable debt flashloan with the **target debt**(`1010 USDC`) on behalf of the user
+4. Swaps the flashloaned target debt asset to the underlying of the **current debt**(`1000 BUSD`), needing only `1000.1 USDC`
+5. Repays the **current debt** (`1000 BUSD`)
+6. Repays the flashloaned collateral asset and premium if needed (requires `aToken` approval)
+7. Uses the remaining new debt asset (`9.9 USDC`) to repay parts of the newly created **target debt**
 
 Notice how steps 3, 4, 5, and 7 are the same four steps from the collateral-less flow.
 
 The guidelines for selecting a proper extra collateral asset are as follows:
 
 For Aave V3:
+
 1. Ensure that the potential asset's LTV is nonzero.
 2. Ensure that the potential asset's LT is nonzero.
 3. Ensure that the potential asset's Supply Cap has sufficient capacity.
-4. If the user is in isolation mode, ensure the asset is the same as the isolated collateral asset. 
+4. If the user is in isolation mode, ensure the asset is the same as the isolated collateral asset.
 
 For Aave V2:
+
 1. Ensure that the potential asset's LTV is nonzero.
 2. Ensure that the potential asset's LT is nonzero.
 3. Ensure that the extra collateral asset is the same as the new debt asset.
@@ -104,6 +111,7 @@ struct PermitInput {
   bytes32 r;
   bytes32 s;
 }
+
 ```
 
 ## ParaSwapLiquidityAdapter
@@ -111,22 +119,21 @@ struct PermitInput {
 ParaSwapLiquidityAdapter aims to allow users to arbitrage supply APY.
 Therefore, this contract is able to swap one collateral position to another collateral position - either partially or completely.
 
-You could for example swap your `1000 BUSD` collateral to `min(995 USDC)` collateral.
-In order to perform this task, `swapLiquidity`:
+You could for example swap your `1000 BUSD` collateral to `min(995 USDC)` collateral. In order to perform this task, `swapLiquidity`:
 
 1. Pulls the `1000 aBUSD` token from user and withdraws `1000 BUSD` from pool. (requires `aToken` approval)
-2. It then swaps the collateral asset to the new collateral asset via exact in swap (meaning it will send `1000 BUSD` for the swap but may receive `995 USDC`)
-3. Supplies the received `995 USDC`` to the pool on behalf of user and user receives `995 aUSDC`.
+2. It then swaps the collateral asset to the new collateral asset via exact in swap (meaning it will send `1000 BUSD` for the swap and receive at least `995 USDC`)
+3. Supplies the received `995 USDC` to the pool on behalf of user and user receives `995 aUSDC`.
 
 The user has now swapped off his `1000 BUSD` collateral position, and created a new `995 USDC` collateral position.
 
 In situations where a user's real loan-to-value (LTV) is higher than their maximum LTV but lower than their liquidation threshold (LT), extra collateral is needed in the steps outlined above. The flow would then look like this(assuming flashloan premium as `0.09%`):
 
-1. Create a standard, repayable flashloan with the collateral asset(`BUSD`) and amount equals to the collateral to swap(`1000`).
-2. Swap the collateral asset with amount excluding the flashloan premium(`1000 BUSD` - flashloan premium = `999.1 BUSD`) to the new collateral asset(`USDC`). 
-3. Deposit the `USDC` received in step 2 as a collateral in the pool on behalf of user.
-4. Pull the `1000 aBUSD` from the user and withdraws `1000 BUSD` from the pool.  (requires `aToken` approval)
-5. Repay `1000 BUSD` flashloan and `0.9 BUSD` premium.
+1. Creates a standard, repayable flashloan with the collateral asset(`BUSD`) and amount equals to the collateral to swap(`1000`).
+2. Swaps the collateral asset via exact in with amount excluding the flashloan premium(`1000 BUSD` - flashloan premium = `999.1 BUSD`) to the new collateral asset(`USDC`). Flashloan premium stays in the contract so repayment is guaranteed.
+3. Supplies the `USDC` received in step 2 as a collateral in the pool on behalf of user.
+4. Pulls the `1000 aBUSD` from the user and withdraws `1000 BUSD` from the pool. (requires `aToken` approval)
+5. Repays `1000 BUSD` flashloan and `0.9 BUSD` premium.
 
 The `function swapLiquidity(LiquiditySwapParams memory liquiditySwapParams, FlashParams memory flashParams, PermitInput memory collateralATokenPermit)` expects three parameters.
 
@@ -134,22 +141,25 @@ The first one describes the swap:
 
 ```solidity
 struct LiquiditySwapParams {
-    address collateralAsset;  // the asset you want to swap collateral from
-    uint256 collateralAmountToSwap; // the amount you want to swap from
-    address newCollateralAsset; // the asset you want to swap collateral to
-    uint256 newCollateralAmount; // the minimum amount of new collateral asset to be received
-    uint256 offset; // offset in calldata in case of all collateral is to be swapped
-    bytes paraswapData; // encoded exactIn swap
-  }
+  address collateralAsset; // the asset to swap collateral from
+  uint256 collateralAmountToSwap; // the amount of asset to swap from
+  address newCollateralAsset; // the asset to swap collateral to
+  uint256 newCollateralAmount; // the minimum amount of new collateral asset to receive
+  uint256 offset; // offset in sell calldata in case of swapping all collateral, otherwise 0
+  address user; // the address of user
+  bytes paraswapData; // encoded paraswap data
+}
+
 ```
 
 The second one describes the (optional) flashParams:
 
 ```solidity
 struct FlashParams {
-    address flashLoanAsset; // the asset to flashloan(collateralAsset)
-    uint256 flashLoanAmount; // the amount to flashloan(collateralAmountToSwap)
-  }
+  address flashLoanAsset; // the asset to flashloan (collateralAsset)
+  uint256 flashLoanAmount; // the amount to flashloan (collateralAmountToSwap)
+}
+
 ```
 
 The third one describes the (optional) collateral aToken permit:
@@ -163,29 +173,29 @@ struct PermitInput {
   bytes32 r;
   bytes32 s;
 }
+
 ```
 
 ## ParaSwapRepayAdapter
 
-ParaSwapRepayAdapter aims to allow users to repay the borrow position using collateral position.
+ParaSwapRepayAdapter aims to allow users to repay debt using collateral position.
 Therefore, this contract is able to swap one collateral position to repay borrow position - either partially or completely.
 
-You could for example swap your `max(1000 BUSD)` collateral to repay `(995 USDC)` borrow position.
-In order to perform this task, `repayWithCollateral`:
+You could for example repay `1000 USDC` borrow position by swapping your `max(1005 BUSD)` that are supplied as collateral. In order to perform this task, `repayWithCollateral`:
 
-1. Pulls the `1000 aBUSD` token from user and withdraws `1000 BUSD` from pool. (requires `aToken` approval)
-2. It then swaps the collateral asset to the borrow asset via exact out swap (meaning it will send `max(1000 BUSD)` for the swap but receive exact `995 USDC`)
-3. Repays the received `995 USDC` to the pool on behalf of user.
+1. Pulls the `1005 aBUSD` token from user and withdraws `1005 BUSD` from pool. (requires `aToken` approval)
+2. It then swaps the collateral asset to the borrow asset via exact out swap (meaning it will send `max(1005 BUSD)` for the swap but receive exact `1000 USDC`)
+3. Repays the borrow position with received `1000 USDC` on behalf of user.
 
-The user has now swapped off his `1000 BUSD` collateral position, and repayed a `995 USDC` borrow position.
+The user has now repaid a `1000 USDC` borrow position by swapping off his `1005 BUSD` collateral position.
 
 In situations where a user's real loan-to-value (LTV) is higher than their maximum LTV but lower than their liquidation threshold (LT), extra collateral is needed in the steps outlined above. The flow would then look like this(assuming flashloan premium as `0.09%`):
 
-1. Create a standard, repayable flashloan with the collateral asset(`BUSD`) with value equivalent to the value to be repaid of borrowed asset.
-2. Swap the collateral asset with amount received to the borrowed asset(`USDC`) using exactOut. 
-3. Repays the exact `USDC` received in step 2 in the pool on behalf of user.
-4. Pull the `aBUSD` from the user equivalent to the value of (flashloan + premium - unutilized flashloan asset in step 2).  (requires `aToken` approval)
-5. Repays the flashloan alongwith premium.
+1. Creates a standard, repayable flashloan with the collateral asset(`BUSD`) with value equivalent to the value of collateral asset to be used for the repayment.
+2. Swaps the flashed assets to the borrow asset(`USDC`) via exact out.
+3. Repays the borrow position with received `USDC` in step 2 on behalf of user.
+4. Pull the `aBUSD` from the user equivalent to the value of (flashloan + premium - unutilized flashloan asset in step 2). (requires `aToken` approval)
+5. Repays the flashloan along with premium.
 
 The `function repayWithCollateral(RepayParams memory repayParams, FlashParams memory flashParams, PermitInput memory collateralATokenPermit)` expects three parameters.
 
@@ -193,23 +203,26 @@ The first one describes the repay params:
 
 ```solidity
 struct RepayParams {
-    address collateralAsset; // the asset you want to swap collateral from
-    uint256 maxCollateralAmountToSwap; // the max amount you want to swap from
-    address debtRepayAsset; // the asset you want to repay the debt
-    uint256 debtRepayAmount; // the amount of debt to be paid
-    uint256 debtRepayMode; // the type of debt (1 for stable, 2 for variable)
-    uint256 offset; // offset in calldata in case of all collateral is to be swapped
-    bytes paraswapData; // encoded exactOut swap
-  }
+  address collateralAsset; // the asset you want to swap collateral from
+  uint256 maxCollateralAmountToSwap; // the max amount you want to swap from
+  address debtRepayAsset; // the asset you want to repay the debt
+  uint256 debtRepayAmount; // the amount of debt to repay
+  uint256 debtRepayMode; // debt interest rate mode (1 for stable, 2 for variable)
+  uint256 offset; // offset in buy calldata in case of swapping all collateral, otherwise 0
+  address user; // the address of user
+  bytes paraswapData; // encoded paraswap data
+}
+
 ```
 
 The second one describes the (optional) flashParams:
 
 ```solidity
 struct FlashParams {
-    address flashLoanAsset; // the asset to flashloan(collateralAsset)
-    uint256 flashLoanAmount; // the amount to flashloan equivalent to the debt to be repaid
-  }
+  address flashLoanAsset; // the asset to flashloan (collateralAsset)
+  uint256 flashLoanAmount; // the amount to flashloan equivalent to the debt to repay
+}
+
 ```
 
 The third one describes the (optional) collateral aToken permit:
@@ -223,17 +236,20 @@ struct PermitInput {
   bytes32 r;
   bytes32 s;
 }
+
 ```
 
 ## ParaSwapWithdrawSwapAdapter
 
-ParaSwapRepayAdapter aims to allow users to withdraw their collateral and swap the received collateral asset to other asset.
+ParaSwapRepayAdapter aims to allow users to withdraw their collateral and swap it to other asset.
 
-You could for example withdraw your `(1000 BUSD)` collateral and convert the received collateral to `min(995 USDC)`.
-In order to perform this task, `withdrawAndSwap`:
+You could for example withdraw your `1000 BUSD` collateral and convert the received collateral to `min(995 USDC)`. In order to perform this task, `withdrawAndSwap`:
 
 1. Pulls the `1000 aBUSD` token from user and withdraws `1000 BUSD` from pool. (requires `aToken` approval)
-2. It then swaps the BUSD to the USDC via exact in swap (meaning it will send `(1000 BUSD)` for the swap but receive `min(995 USDC)`)
+2. It then swaps the BUSD to the USDC via exact in swap (meaning it will send `1000 BUSD` for the swap and receive at least `995 USDC`).
+3. Transfers the new asset amount `995 USDC` to the user.
+
+The user has now withdraw a 1000 BUSD collateral position and swapped it off to 995 USDC.
 
 The `function withdrawAndSwap(WithdrawSwapParams memory withdrawSwapParams, PermitInput memory permitInput)` expects two parameters.
 
@@ -241,13 +257,15 @@ The first one describes the withdraw params:
 
 ```solidity
 struct WithdrawSwapParams {
-    address oldAsset; // the asset you want withdraw and swap from
-    uint256 oldAssetAmount; // the amount you want to withdraw
-    address newAsset; // the asset you want to swap to
-    uint256 minAmountToReceive; // the minimum amount you expect to receive
-    uint256 allBalanceOffset; // offset in calldata in case of all the asset to withdraw
-    bytes paraswapData; // encoded exactIn swap
-  }
+  address oldAsset; // the asset to withdraw and swap from
+  uint256 oldAssetAmount; // the amount to withdraw
+  address newAsset; // the asset to swap to
+  uint256 minAmountToReceive; // the minimum amount of new asset to receive
+  uint256 allBalanceOffset; // offset in sell calldata in case of swapping all collateral, otherwise 0
+  address user; // the address of user
+  bytes paraswapData; // encoded paraswap data
+}
+
 ```
 
 The second one describes the (optional) collateral aToken permit:
@@ -261,29 +279,44 @@ struct PermitInput {
   bytes32 r;
   bytes32 s;
 }
+
 ```
 
 For usage examples please check the [tests](./tests/).
 
 ## Security
 
-- This contract is a extra layer on top of [BaseParaswapBuyAdapter](./src/contracts/BaseParaSwapBuyAdapter.sol) which is used in production for [ParaSwapRepayAdapter](https://github.com/aave/aave-v3-periphery/blob/master/contracts/adapters/paraswap/ParaSwapRepayAdapter.sol). It uses the exact same mechanism for exact out swap.
+Security considerations around the ParaSwap adapter contracts:
 
-- In contrast to ParaSwapRepayAdapter the ParaSwapDebtSwapAdapter will always repay on the pool on behalf of the user. So instead of having approvals per transaction the adapter will approve `type(uint256).max` once to reduce gas consumption.
+- The adapter contracts are built on top of [BaseParaswapBuyAdapter](./src/contracts/BaseParaSwapBuyAdapter.sol) and [BaseParaswapSellAdapter](./src/contracts/BaseParaSwapSellAdapter.sol) which has been used in production for the previous version of these adapters ([Aave Protocol](https://github.com/Aave/Aave-V3-periphery/blob/master/contracts/adapters/paraswap)).
+
+- The adapter contracts always act on behalf of the user. So instead of having approvals per transaction the adapter will approve `type(uint256).max` once to reduce gas consumption.
 
 - The Aave `POOL` is considered a trustable entity for allowance purposes.
 
-- The contract only interact with `msg.sender` and therefore ensures isolation between users.
+- Contracts only interact with 1 single user per action, ensuring isolation between users.
 
-- The contract is not upgradable.
+- Contracts are not upgradable.
 
-- The contract is ownable and will be owned by governance, so the governance will be the only entity able to call `tokenRescue`.
+- Contracts are ownable and will be owned by governance, so the governance will be the only entity able to call `tokenRescue`.
 
 - The approach with credit delegation and borrow-mode flashLoans is very similar to what is done on [V2-V3 Migration helper](https://github.com/bgd-labs/V2-V3-migration-helpers)
 
-- The contract inherits the security and limitations of Aave v2/v3. The contract itself does not validate for frozen/inactive reserves and also does not consider isolation/eMode or borrowCaps. It is the responsibility of the interface integrating this contract to correctly handle all user position compositions and pool configurations.
+- Contracts inherit the security and limitations of Aave V2/V3. Contracts themselves do not validate for frozen/inactive reserves and also do not consider isolation/eMode or borrowCaps. It is the responsibility of the interface integrating these contracts to correctly handle all user position compositions and pool configurations.
 
-- The contract implements an upper bound of 30% price impact, which would revert any swap. The slippage has to be properly configured in incorporated into the `DebtSwapParams.maxNewDebt` parameter.
+- Contracts implement an upper bound of 30% price impact, which would revert any swap. The slippage has to be properly configured in incorporated into:
+
+  - `DebtSwapParams.maxNewDebt` parameter for `ParaSwapDebtSwapAdapter`
+  - `LiquiditySwapParams.newCollateralAmount` parameter for `ParaSwapLiquiditySwapAdapter`
+  - `RepayParams.maxCollateralAmountToSwap` parameter for `ParaSwapRepayAdapter`
+  - `WithdrawSwapParams.minAmountToReceive` parameter for `ParaSwapWithdrawSwapAdapter`
+
+- Contracts are using SELL and BUY operations of ParaSwap for swaps, which allows to designate exact input or output for swaps:
+
+  - A SELL action of X means the adapter contract will spend X exactly for the swap. In case of receiving more than X, is considered dust and automatically donated to the contract.
+  - A BUY action of Y means the adapter contract will receive Y exactly as a result of the swap. In case of receiving more than Y, is considered dust and automatically donated to the contract.
+
+- Contracts support Aave V2 and V3. There are contracts specifically designed for each version, as well as working with GHO.
 
 ## Install
 
@@ -309,8 +342,6 @@ forge test
 
 ## References
 
-This code is based on [the existing aave paraswap adapters](https://github.com/aave/aave-v3-periphery/tree/master/contracts/adapters/paraswap) for v3.
+This code is a fork of [Aave Debt Swap Adapter](https://github.com/bgd-labs/Aave-debt-swap) contract by [BGD Labs](https://github.com/bgd-labs). Intention is to create a modern version of [the existing Aave paraswap adapters](https://github.com/Aave/Aave-V3-periphery/tree/master/contracts/adapters/paraswap) for V3, by extending the code of the Aave Debt Swap Adapter.
 
-The [BaseParaSwapAdapter.sol](./src/contracts/BaseParaSwapAdapter.sol) was slightly adjusted to receive the POOL via constructor instead of fetching it.
-
-This makes the code agnostic for v2 and v3, as the only methods used are unchanged between the two versions.
+Furthermore, these contracts are heavily inspired by the [ParaSwap adapter contracts of Aave Protocol V2](https://github.com/Aave/protocol-V2/tree/master/contracts/adapters) written by ParaSwap team.

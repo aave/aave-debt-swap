@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
+
 import {ICreditDelegationToken} from './ICreditDelegationToken.sol';
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
-import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 
 interface IParaSwapDebtSwapAdapter is IBaseParaSwapAdapter {
   struct FlashParams {

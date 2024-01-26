@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {ParaSwapRepayAdapter} from './ParaSwapRepayAdapter.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
+import {ParaSwapRepayAdapter} from './ParaSwapRepayAdapter.sol';
 
 /**
  * @title ParaSwapRepayAdapterV2
- * @notice Provides the functionality of ParaSwapRepayAdapter for Aave V2 pool
+ * @notice ParaSwap Adapter to repay debt with collateral.
+ * @dev It is specifically designed for Aave V2
+ * @author Aave Labs
  **/
 contract ParaSwapRepayAdapterV2 is ParaSwapRepayAdapter {
   /**
@@ -17,7 +19,7 @@ contract ParaSwapRepayAdapterV2 is ParaSwapRepayAdapter {
    * @param addressesProvider The address of the Aave PoolAddressesProvider contract
    * @param pool The address of the Aave Pool contract
    * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
-   * @param owner The address to transfer ownership to
+   * @param owner The address of the owner
    */
   constructor(
     IPoolAddressesProvider addressesProvider,

@@ -20,7 +20,7 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
   using SafeERC20 for IERC20;
 
   // @inheritdoc IBaseParaSwapAdapter
-  uint256 public constant MAX_SLIPPAGE_PERCENT = 3000; // 30%
+  uint256 public constant MAX_SLIPPAGE_PERCENT = 0.3e4; // 30.00%
 
   // @inheritdoc IBaseParaSwapAdapter
   IPriceOracleGetter public immutable ORACLE;
@@ -112,16 +112,13 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
       );
     }
 
-    (, , address reserveAToken) = _getReserveData(reserve);
+    (, , address aToken) = _getReserveData(reserve);
 
-    uint256 reserveATokenBalanceBefore = IERC20(reserveAToken).balanceOf(address(this));
-    // transfer from user to adapter
-    IERC20(reserveAToken).safeTransferFrom(user, address(this), amount);
+    uint256 aTokenBalanceBefore = IERC20(aToken).balanceOf(address(this));
+    IERC20(aToken).safeTransferFrom(user, address(this), amount);
+    uint256 aTokenBalanceDiff = IERC20(aToken).balanceOf(address(this)) - aTokenBalanceBefore;
 
-    uint256 reserveATokenBalanceReceived = IERC20(reserveAToken).balanceOf(address(this)) -
-      reserveATokenBalanceBefore;
-    // withdraw reserve
-    POOL.withdraw(reserve, reserveATokenBalanceReceived, address(this));
-    return reserveATokenBalanceReceived;
+    POOL.withdraw(reserve, aTokenBalanceDiff, address(this));
+    return aTokenBalanceDiff;
   }
 }

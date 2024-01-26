@@ -10,7 +10,9 @@ import {ParaSwapLiquiditySwapAdapter} from './ParaSwapLiquiditySwapAdapter.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapterV3
- * @notice Provides the functionality of ParaSwapLiquiditySwapAdapter for Aave V3 pool
+ * @notice ParaSwap Adapter to perform a swap of collateral from one asset to another.
+ * @dev It is specifically designed for Aave V3
+ * @author Aave Labs
  **/
 contract ParaSwapLiquiditySwapAdapterV3 is ParaSwapLiquiditySwapAdapter {
   /**
@@ -18,7 +20,7 @@ contract ParaSwapLiquiditySwapAdapterV3 is ParaSwapLiquiditySwapAdapter {
    * @param addressesProvider The address of the Aave PoolAddressesProvider contract
    * @param pool The address of the Aave Pool contract
    * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
-   * @param owner The address to transfer ownership to
+   * @param owner The address of the owner
    */
   constructor(
     IPoolAddressesProvider addressesProvider,

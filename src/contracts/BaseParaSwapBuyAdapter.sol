@@ -11,12 +11,13 @@ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 
 /**
  * @title BaseParaSwapBuyAdapter
- * @notice Implements the logic for buying tokens(exact out) on ParaSwap
+ * @notice Implements logic for buying an asset using ParaSwap (exact-out swap)
  */
 abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
   using SafeERC20 for IERC20Detailed;
   using PercentageMath for uint256;
 
+  /// @notice The address of the Paraswap Augustus Registry
   IParaSwapAugustusRegistry public immutable AUGUSTUS_REGISTRY;
 
   /**
@@ -37,13 +38,15 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
 
   /**
    * @dev Swaps a token for another using ParaSwap (exact out)
+   * @dev ParaSwap does not impose the swap output is exact, meaning that the amount bought can be
+   * higher than the designated amount to buy
    * @param toAmountOffset Offset of toAmount in Augustus calldata if it should be overwritten, otherwise 0
    * @param paraswapData Data for Paraswap Adapter
-   * @param assetToSwapFrom Address of the asset to be swapped from
-   * @param assetToSwapTo Address of the asset to be swapped to
-   * @param maxAmountToSwap Max amount to be swapped
-   * @param amountToReceive Amount to be received from the swap
-   * @return amountSold The amount sold during the swap
+   * @param assetToSwapFrom The address of the asset to swap from
+   * @param assetToSwapTo The address of the asset to swap to
+   * @param maxAmountToSwap The maximum amount of asset to swap from
+   * @param amountToReceive The amount of asset to receive
+   * @return amountSold The amount of asset sold
    */
   function _buyOnParaSwap(
     uint256 toAmountOffset,
@@ -57,7 +60,6 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
       paraswapData,
       (bytes, IParaSwapAugustus)
     );
-
     require(AUGUSTUS_REGISTRY.isValidAugustus(address(augustus)), 'INVALID_AUGUSTUS');
 
     {
@@ -71,11 +73,13 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
         (toAssetPrice * (10 ** fromAssetDecimals))) / (fromAssetPrice * (10 ** toAssetDecimals)))
         .percentMul(PercentageMath.PERCENTAGE_FACTOR + MAX_SLIPPAGE_PERCENT);
 
-      require(maxAmountToSwap <= expectedMaxAmountToSwap, 'maxAmountToSwap exceed max slippage');
+      // Sanity check for `maxAmountToSwap` to ensure it is within slippage bounds
+      require(maxAmountToSwap <= expectedMaxAmountToSwap, 'maxAmountToSwap exceeds max slippage');
     }
 
     uint256 balanceBeforeAssetFrom = assetToSwapFrom.balanceOf(address(this));
     require(balanceBeforeAssetFrom >= maxAmountToSwap, 'INSUFFICIENT_BALANCE_BEFORE_SWAP');
+
     uint256 balanceBeforeAssetTo = assetToSwapTo.balanceOf(address(this));
 
     address tokenTransferProxy = augustus.getTokenTransferProxy();
@@ -105,9 +109,12 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
       }
     }
 
+    // Amount provided should be less or equal than `maxAmountToSwap`
     uint256 balanceAfterAssetFrom = assetToSwapFrom.balanceOf(address(this));
     amountSold = balanceBeforeAssetFrom - balanceAfterAssetFrom;
     require(amountSold <= maxAmountToSwap, 'WRONG_BALANCE_AFTER_SWAP');
+
+    // Amount received should be equal (or even higher) than `amountToReceive`
     uint256 amountReceived = assetToSwapTo.balanceOf(address(this)) - balanceBeforeAssetTo;
     require(amountReceived >= amountToReceive, 'INSUFFICIENT_AMOUNT_RECEIVED');
 

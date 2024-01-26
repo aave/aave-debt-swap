@@ -53,6 +53,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: 0,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -85,6 +86,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: 0,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -115,6 +117,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: swapAmount,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
     IBaseParaSwapAdapter.PermitInput memory tokenPermit;
@@ -152,6 +155,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: swapAmount,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -195,6 +199,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: swapAmount,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
     IBaseParaSwapAdapter.PermitInput memory tokenPermit;

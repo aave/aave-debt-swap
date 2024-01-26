@@ -29,9 +29,10 @@ contract LiquiditySwapAdapterV3 is BaseTest {
       AaveGovernanceV2.SHORT_EXECUTOR
     );
     vm.startPrank(0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A); //ACL admin
-    IACLManager(address(AaveV3Ethereum.ACL_MANAGER)).addFlashBorrower(address(liquiditySwapAdapter));
+    IACLManager(address(AaveV3Ethereum.ACL_MANAGER)).addFlashBorrower(
+      address(liquiditySwapAdapter)
+    );
     vm.stopPrank();
-
   }
 
   function test_revert_executeOperation_not_pool() public {
@@ -182,7 +183,6 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     );
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
     _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
-
   }
 
   function test_liquiditySwap_permit_without_extra_collateral() public {
@@ -252,13 +252,12 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     uint256 daiSupplyAmount = 12000e18;
     uint256 usdcSupplyAmount = 12000e6;
     uint256 borrowAmount = 80e18;
-    
+
     address anotherCollateralAsset = AaveV3EthereumAssets.USDC_UNDERLYING;
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
     address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
-
 
     vm.startPrank(user);
 
@@ -365,30 +364,26 @@ contract LiquiditySwapAdapterV3 is BaseTest {
 
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
     IParaSwapLiquiditySwapAdapter.PermitInput memory flashLoanATokenPermit;
-    IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams = IParaSwapLiquiditySwapAdapter.FlashParams({
-      flashLoanAsset: flashLoanAsset,
-      flashLoanAmount: flashLoanAmount
-    });
+    IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams = IParaSwapLiquiditySwapAdapter
+      .FlashParams({flashLoanAsset: flashLoanAsset, flashLoanAmount: flashLoanAmount});
 
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
     {
-    uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
-    assertTrue(
-      _withinRange(
-        collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
-        collateralAmountToSwap,
-        2
-      )
-    );
+      uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+        user
+      );
+      assertTrue(
+        _withinRange(
+          collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
+          collateralAmountToSwap,
+          2
+        )
+      );
     }
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
     _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
     _invariant(address(liquiditySwapAdapter), flashLoanAsset, flashLoanAssetAToken);
   }
-
-
 
   function _supply(IPool pool, uint256 amount, address asset) internal {
     deal(asset, user, amount);

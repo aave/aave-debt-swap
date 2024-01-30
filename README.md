@@ -316,7 +316,15 @@ Security considerations around the ParaSwap adapter contracts:
   - A SELL action of X means the adapter contract will spend X exactly for the swap. In case of receiving more than X, is considered dust and automatically donated to the contract.
   - A BUY action of Y means the adapter contract will receive Y exactly as a result of the swap. In case of receiving more than Y, is considered dust and automatically donated to the contract.
 
-- Contracts support Aave V2 and V3. There are contracts specifically designed for each version, as well as working with GHO.
+- Contracts support Aave V2 and V3. There are contracts specifically designed for each version, as well as for working with GHO.
+
+- ParaSwap extracts token surplus if ParaSwap positive slippage happens: the trade ends up with a positive result favoring the user (e.g. receiving more assets than expected in a BUY, receiving more assets than expected for same amount of assets in exchange in a SELL).
+  - Positive slippage means the trade was more efficient than expected, so user is not impacted by the surplus extraction theoretically (e.g. they will get as much tokens as expected). However, a misconfiguration or bad integration with these contracts can lead to artificially create positive slippage.
+  - Using full balance of users position for an action is a bit problematic and could lead to positive slippage if transaction swap amounts highly differ from amounts used for the ParaSwap API Call. Highly recommended to estimate properly the full balance the user will have at the transaction execution time.
+    - When using full balance, the ParaSwap `offset` is set to non-zero value (depends on the action) the `amount` is set to a high value (higher than the current balance of the user) so contracts override the amount with the last updated value of the user position. This could artificially create positive slippage if the amount used for the ParaSwap API call highly differs from the amount that is finally used on the transaction execution (the actual one).
+    - Example for `BUY`: API call of `buy(x,y)` and swap transaction of `buy(x',y')`. If `y'>y` then `x'>x`, so positive slippage happens as user is receiving more assets than expected.
+    - Example for `SELL`: API call of `sell(x,y)` and swap transaction of `sell(x',y')`. If `x'>x` then `y'>y`, so positive slippage happens as user is receiving more assets than expected.
+
 
 ## Install
 

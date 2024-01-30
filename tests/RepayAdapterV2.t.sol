@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IACLManager} from '@aave/core-v3/contracts/interfaces/IACLManager.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {Errors} from 'aave-address-book/AaveV2.sol';
@@ -10,9 +9,7 @@ import {AaveV2Ethereum, AaveV2EthereumAssets, ILendingPool} from 'aave-address-b
 import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapRepayAdapterV2} from '../src/contracts/ParaSwapRepayAdapterV2.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
-import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
 import {IParaSwapRepayAdapter} from '../src/interfaces/IParaSwapRepayAdapter.sol';
-import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 
 contract RepayAdapterV2 is BaseTest {

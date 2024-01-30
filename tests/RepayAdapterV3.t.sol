@@ -10,9 +10,7 @@ import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/Aav
 import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapRepayAdapterV3} from '../src/contracts/ParaSwapRepayAdapterV3.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
-import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
 import {IParaSwapRepayAdapter} from '../src/interfaces/IParaSwapRepayAdapter.sol';
-import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 import 'forge-std/Test.sol';
 

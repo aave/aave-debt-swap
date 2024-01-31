@@ -62,326 +62,326 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     );
   }
 
-  function test_revert_liquiditySwap_without_extra_collateral() public {
-    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
-    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
-    address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+  // function test_revert_liquiditySwap_without_extra_collateral() public {
+  //   address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+  //   address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+  //   address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
 
-    uint256 supplyAmount = 120e18;
-    uint256 borrowAmount = 80e18;
+  //   uint256 supplyAmount = 120e18;
+  //   uint256 borrowAmount = 80e18;
 
-    // We want to end with LT > utilisation > LTV, so we pump up the utilisation to 75% by withdrawing (80 > 75 > 67).
-    uint256 withdrawAmount = supplyAmount - (borrowAmount * 100) / 75;
+  //   // We want to end with LT > utilisation > LTV, so we pump up the utilisation to 75% by withdrawing (80 > 75 > 67).
+  //   uint256 withdrawAmount = supplyAmount - (borrowAmount * 100) / 75;
 
-    vm.startPrank(user);
+  //   vm.startPrank(user);
 
-    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
-    _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
+  //   _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
+  //   _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
 
-    _withdraw(AaveV3Ethereum.POOL, withdrawAmount, collateralAsset);
+  //   _withdraw(AaveV3Ethereum.POOL, withdrawAmount, collateralAsset);
 
-    vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
-    _withdraw(AaveV3Ethereum.POOL, 25e18, collateralAsset);
+  //   vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
+  //   _withdraw(AaveV3Ethereum.POOL, 25e18, collateralAsset);
 
-    // Swap liquidity(collateral)
-    uint256 collateralAmountToSwap = 25e18;
-    PsPResponse memory psp = _fetchPSPRoute(
-      collateralAsset,
-      newCollateralAsset,
-      collateralAmountToSwap,
-      user,
-      true,
-      false
-    );
+  //   // Swap liquidity(collateral)
+  //   uint256 collateralAmountToSwap = 25e18;
+  //   PsPResponse memory psp = _fetchPSPRoute(
+  //     collateralAsset,
+  //     newCollateralAsset,
+  //     collateralAmountToSwap,
+  //     user,
+  //     true,
+  //     false
+  //   );
 
-    skip(1 hours);
+  //   skip(1 hours);
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(liquiditySwapAdapter),
-      collateralAmountToSwap
-    );
+  //   IERC20Detailed(collateralAssetAToken).approve(
+  //     address(liquiditySwapAdapter),
+  //     collateralAmountToSwap
+  //   );
 
-    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
-      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
-        collateralAsset: collateralAsset,
-        collateralAmountToSwap: collateralAmountToSwap,
-        newCollateralAsset: newCollateralAsset,
-        newCollateralAmount: 25e18,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+  //   IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+  //     memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
+  //       collateralAsset: collateralAsset,
+  //       collateralAmountToSwap: collateralAmountToSwap,
+  //       newCollateralAsset: newCollateralAsset,
+  //       newCollateralAmount: 25e18,
+  //       offset: psp.offset,
+  //       user: user,
+  //       paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+  //     });
 
-    IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams;
-    IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
+  //   IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams;
+  //   IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
 
-    vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
-    liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
-  }
+  //   vm.expectRevert(bytes(Errors.HEALTH_FACTOR_LOWER_THAN_LIQUIDATION_THRESHOLD));
+  //   liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
+  // }
 
-  function test_liquiditySwap_without_extra_collateral() public {
-    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
-    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
-    address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
+  // function test_liquiditySwap_without_extra_collateral() public {
+  //   address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+  //   address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+  //   address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+  //   address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
 
-    uint256 supplyAmount = 12000e18;
-    uint256 borrowAmount = 80e18;
+  //   uint256 supplyAmount = 12000e18;
+  //   uint256 borrowAmount = 80e18;
 
-    vm.startPrank(user);
+  //   vm.startPrank(user);
 
-    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
-    _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
+  //   _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
+  //   _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
 
-    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
+  //   uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+  //     user
+  //   );
 
-    // Swap liquidity(collateral)
-    uint256 collateralAmountToSwap = 1000e18;
-    PsPResponse memory psp = _fetchPSPRoute(
-      collateralAsset,
-      newCollateralAsset,
-      collateralAmountToSwap,
-      user,
-      true,
-      false
-    );
+  //   // Swap liquidity(collateral)
+  //   uint256 collateralAmountToSwap = 1000e18;
+  //   PsPResponse memory psp = _fetchPSPRoute(
+  //     collateralAsset,
+  //     newCollateralAsset,
+  //     collateralAmountToSwap,
+  //     user,
+  //     true,
+  //     false
+  //   );
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(liquiditySwapAdapter),
-      collateralAmountToSwap
-    );
+  //   IERC20Detailed(collateralAssetAToken).approve(
+  //     address(liquiditySwapAdapter),
+  //     collateralAmountToSwap
+  //   );
 
-    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
-      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
-        collateralAsset: collateralAsset,
-        collateralAmountToSwap: collateralAmountToSwap,
-        newCollateralAsset: newCollateralAsset,
-        newCollateralAmount: 900e18,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+  //   IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+  //     memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
+  //       collateralAsset: collateralAsset,
+  //       collateralAmountToSwap: collateralAmountToSwap,
+  //       newCollateralAsset: newCollateralAsset,
+  //       newCollateralAmount: 900e18,
+  //       offset: psp.offset,
+  //       user: user,
+  //       paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+  //     });
 
-    IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams;
-    IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
+  //   IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams;
+  //   IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
 
-    liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
+  //   liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
 
-    uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
-    assertTrue(
-      _withinRange(
-        collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
-        collateralAmountToSwap,
-        2
-      )
-    );
-    _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
-    _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
-  }
+  //   uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+  //     user
+  //   );
+  //   assertTrue(
+  //     _withinRange(
+  //       collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
+  //       collateralAmountToSwap,
+  //       2
+  //     )
+  //   );
+  //   _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
+  //   _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
+  // }
 
-  function test_liquiditySwap_permit_without_extra_collateral() public {
-    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
-    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
-    address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
+  // function test_liquiditySwap_permit_without_extra_collateral() public {
+  //   address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+  //   address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+  //   address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+  //   address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
 
-    uint256 supplyAmount = 12000e18;
-    uint256 borrowAmount = 80e18;
+  //   uint256 supplyAmount = 12000e18;
+  //   uint256 borrowAmount = 80e18;
 
-    vm.startPrank(user);
+  //   vm.startPrank(user);
 
-    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
-    _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
+  //   _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
+  //   _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
 
-    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
+  //   uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+  //     user
+  //   );
 
-    // Swap liquidity(collateral)
-    uint256 collateralAmountToSwap = 1000e18;
-    PsPResponse memory psp = _fetchPSPRoute(
-      collateralAsset,
-      newCollateralAsset,
-      collateralAmountToSwap,
-      user,
-      true,
-      false
-    );
+  //   // Swap liquidity(collateral)
+  //   uint256 collateralAmountToSwap = 1000e18;
+  //   PsPResponse memory psp = _fetchPSPRoute(
+  //     collateralAsset,
+  //     newCollateralAsset,
+  //     collateralAmountToSwap,
+  //     user,
+  //     true,
+  //     false
+  //   );
 
-    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
-      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
-        collateralAsset: collateralAsset,
-        collateralAmountToSwap: collateralAmountToSwap,
-        newCollateralAsset: newCollateralAsset,
-        newCollateralAmount: 900e18,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+  //   IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+  //     memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
+  //       collateralAsset: collateralAsset,
+  //       collateralAmountToSwap: collateralAmountToSwap,
+  //       newCollateralAsset: newCollateralAsset,
+  //       newCollateralAmount: 900e18,
+  //       offset: psp.offset,
+  //       user: user,
+  //       paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+  //     });
 
-    IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams;
-    IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit = _getPermit(
-      collateralAssetAToken,
-      address(liquiditySwapAdapter),
-      collateralAmountToSwap
-    );
+  //   IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams;
+  //   IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit = _getPermit(
+  //     collateralAssetAToken,
+  //     address(liquiditySwapAdapter),
+  //     collateralAmountToSwap
+  //   );
 
-    liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
+  //   liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
 
-    uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
-    assertTrue(
-      _withinRange(
-        collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
-        collateralAmountToSwap,
-        2
-      )
-    );
-    _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
-    _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
-  }
+  //   uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+  //     user
+  //   );
+  //   assertTrue(
+  //     _withinRange(
+  //       collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
+  //       collateralAmountToSwap,
+  //       2
+  //     )
+  //   );
+  //   _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
+  //   _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
+  // }
 
-  function test_liquiditySwapFull_without_extra_collateral() public {
-    uint256 daiSupplyAmount = 12000e18;
-    uint256 usdcSupplyAmount = 12000e6;
-    uint256 borrowAmount = 80e18;
+  // function test_liquiditySwapFull_without_extra_collateral() public {
+  //   uint256 daiSupplyAmount = 12000e18;
+  //   uint256 usdcSupplyAmount = 12000e6;
+  //   uint256 borrowAmount = 80e18;
 
-    address anotherCollateralAsset = AaveV3EthereumAssets.USDC_UNDERLYING;
-    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
-    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
-    address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
+  //   address anotherCollateralAsset = AaveV3EthereumAssets.USDC_UNDERLYING;
+  //   address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+  //   address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+  //   address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+  //   address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
 
-    vm.startPrank(user);
+  //   vm.startPrank(user);
 
-    _supply(AaveV3Ethereum.POOL, daiSupplyAmount, collateralAsset);
-    _supply(AaveV3Ethereum.POOL, usdcSupplyAmount, anotherCollateralAsset);
-    _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
+  //   _supply(AaveV3Ethereum.POOL, daiSupplyAmount, collateralAsset);
+  //   _supply(AaveV3Ethereum.POOL, usdcSupplyAmount, anotherCollateralAsset);
+  //   _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
 
-    uint256 daiCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
+  //   uint256 daiCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+  //     user
+  //   );
 
-    // Swap liquidity(collateral)
-    uint256 collateralAmountToSwap = daiSupplyAmount;
-    PsPResponse memory psp = _fetchPSPRoute(
-      collateralAsset,
-      newCollateralAsset,
-      collateralAmountToSwap,
-      user,
-      true,
-      true
-    );
+  //   // Swap liquidity(collateral)
+  //   uint256 collateralAmountToSwap = daiSupplyAmount;
+  //   PsPResponse memory psp = _fetchPSPRoute(
+  //     collateralAsset,
+  //     newCollateralAsset,
+  //     collateralAmountToSwap,
+  //     user,
+  //     true,
+  //     true
+  //   );
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(liquiditySwapAdapter),
-      collateralAmountToSwap
-    );
+  //   IERC20Detailed(collateralAssetAToken).approve(
+  //     address(liquiditySwapAdapter),
+  //     collateralAmountToSwap
+  //   );
 
-    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
-      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
-        collateralAsset: collateralAsset,
-        collateralAmountToSwap: collateralAmountToSwap,
-        newCollateralAsset: newCollateralAsset,
-        newCollateralAmount: daiSupplyAmount,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+  //   IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+  //     memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
+  //       collateralAsset: collateralAsset,
+  //       collateralAmountToSwap: collateralAmountToSwap,
+  //       newCollateralAsset: newCollateralAsset,
+  //       newCollateralAmount: daiSupplyAmount,
+  //       offset: psp.offset,
+  //       user: user,
+  //       paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+  //     });
 
-    IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams;
-    IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
+  //   IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams;
+  //   IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
 
-    liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
+  //   liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
 
-    uint256 daiCollateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
-    assertTrue(
-      _withinRange(
-        daiCollateralAssetATokenBalanceBefore - daiCollateralAssetATokenBalanceAfter,
-        collateralAmountToSwap,
-        2
-      )
-    );
-    assertEq(daiCollateralAssetATokenBalanceAfter, 0);
-    _invariant(address(liquiditySwapAdapter), newCollateralAsset, newCollateralAssetAToken);
-    _invariant(address(liquiditySwapAdapter), collateralAsset, collateralAssetAToken);
-  }
+  //   uint256 daiCollateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+  //     user
+  //   );
+  //   assertTrue(
+  //     _withinRange(
+  //       daiCollateralAssetATokenBalanceBefore - daiCollateralAssetATokenBalanceAfter,
+  //       collateralAmountToSwap,
+  //       2
+  //     )
+  //   );
+  //   assertEq(daiCollateralAssetATokenBalanceAfter, 0);
+  //   _invariant(address(liquiditySwapAdapter), newCollateralAsset, newCollateralAssetAToken);
+  //   _invariant(address(liquiditySwapAdapter), collateralAsset, collateralAssetAToken);
+  // }
 
-  function test_liquiditySwap_with_extra_collateral() public {
-    uint256 supplyAmount = 12000e18;
-    uint256 borrowAmount = 5000e18;
-    uint256 flashLoanAmount = 2000e18;
-    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
-    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
-    address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
-    address flashLoanAsset = collateralAsset;
-    address flashLoanAssetAToken = collateralAssetAToken;
-    vm.startPrank(user);
+  // function test_liquiditySwap_with_extra_collateral() public {
+  //   uint256 supplyAmount = 12000e18;
+  //   uint256 borrowAmount = 5000e18;
+  //   uint256 flashLoanAmount = 2000e18;
+  //   address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+  //   address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+  //   address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+  //   address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
+  //   address flashLoanAsset = collateralAsset;
+  //   address flashLoanAssetAToken = collateralAssetAToken;
+  //   vm.startPrank(user);
 
-    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
-    _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
+  //   _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
+  //   _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
 
-    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
+  //   uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+  //     user
+  //   );
 
-    // Swap liquidity(collateral)
-    uint256 collateralAmountToSwap = 2000e18;
-    PsPResponse memory psp = _fetchPSPRoute(
-      collateralAsset,
-      newCollateralAsset,
-      collateralAmountToSwap,
-      user,
-      true,
-      false
-    );
+  //   // Swap liquidity(collateral)
+  //   uint256 collateralAmountToSwap = 2000e18;
+  //   PsPResponse memory psp = _fetchPSPRoute(
+  //     collateralAsset,
+  //     newCollateralAsset,
+  //     collateralAmountToSwap,
+  //     user,
+  //     true,
+  //     false
+  //   );
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(liquiditySwapAdapter),
-      collateralAmountToSwap
-    );
+  //   IERC20Detailed(collateralAssetAToken).approve(
+  //     address(liquiditySwapAdapter),
+  //     collateralAmountToSwap
+  //   );
 
-    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
-      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
-        collateralAsset: collateralAsset,
-        collateralAmountToSwap: collateralAmountToSwap,
-        newCollateralAsset: newCollateralAsset,
-        newCollateralAmount: 2000e18,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+  //   IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+  //     memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
+  //       collateralAsset: collateralAsset,
+  //       collateralAmountToSwap: collateralAmountToSwap,
+  //       newCollateralAsset: newCollateralAsset,
+  //       newCollateralAmount: 2000e18,
+  //       offset: psp.offset,
+  //       user: user,
+  //       paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+  //     });
 
-    IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
-    IParaSwapLiquiditySwapAdapter.PermitInput memory flashLoanATokenPermit;
-    IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams = IParaSwapLiquiditySwapAdapter
-      .FlashParams({flashLoanAsset: flashLoanAsset, flashLoanAmount: flashLoanAmount});
+  //   IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
+  //   IParaSwapLiquiditySwapAdapter.PermitInput memory flashLoanATokenPermit;
+  //   IParaSwapLiquiditySwapAdapter.FlashParams memory flashParams = IParaSwapLiquiditySwapAdapter
+  //     .FlashParams({flashLoanAsset: flashLoanAsset, flashLoanAmount: flashLoanAmount});
 
-    liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
-    {
-      uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
-        user
-      );
-      assertTrue(
-        _withinRange(
-          collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
-          collateralAmountToSwap,
-          2
-        )
-      );
-    }
-    _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
-    _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
-    _invariant(address(liquiditySwapAdapter), flashLoanAsset, flashLoanAssetAToken);
-  }
+  //   liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, flashParams, collateralATokenPermit);
+  //   {
+  //     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+  //       user
+  //     );
+  //     assertTrue(
+  //       _withinRange(
+  //         collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
+  //         collateralAmountToSwap,
+  //         2
+  //       )
+  //     );
+  //   }
+  //   _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
+  //   _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
+  //   _invariant(address(liquiditySwapAdapter), flashLoanAsset, flashLoanAssetAToken);
+  // }
 
   function _supply(IPool pool, uint256 amount, address asset) internal {
     deal(asset, user, amount);

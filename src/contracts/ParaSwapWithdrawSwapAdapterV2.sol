@@ -2,14 +2,16 @@
 pragma solidity ^0.8.10;
 
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
-import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 import {ParaSwapWithdrawSwapAdapter} from './ParaSwapWithdrawSwapAdapter.sol';
 
 /**
  * @title ParaSwapWithdrawSwapAdapterV2
- * @notice Provides the functionality of ParaSwapWithdrawSwapAdapter for Aave V2 pool
+ * @notice ParaSwap Adapter to withdraw and swap.
+ * @dev It is specifically designed for Aave V2
+ * @author Aave Labs
  **/
 contract ParaSwapWithdrawSwapAdapterV2 is ParaSwapWithdrawSwapAdapter {
   /**
@@ -17,7 +19,7 @@ contract ParaSwapWithdrawSwapAdapterV2 is ParaSwapWithdrawSwapAdapter {
    * @param addressesProvider The address of the Aave PoolAddressesProvider contract
    * @param pool The address of the Aave Pool contract
    * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
-   * @param owner The address to transfer ownership to
+   * @param owner The address of the owner
    */
   constructor(
     IPoolAddressesProvider addressesProvider,

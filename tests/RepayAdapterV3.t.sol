@@ -10,11 +10,9 @@ import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/Aav
 import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapRepayAdapterV3} from '../src/contracts/ParaSwapRepayAdapterV3.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
-import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
 import {IParaSwapRepayAdapter} from '../src/interfaces/IParaSwapRepayAdapter.sol';
-import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
-import "forge-std/Test.sol";
+import 'forge-std/Test.sol';
 
 contract RepayAdapterV3 is BaseTest {
   ParaSwapRepayAdapterV3 internal repayAdapter;
@@ -95,21 +93,17 @@ contract RepayAdapterV3 is BaseTest {
 
     skip(1 hours);
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(repayAdapter),
-      maxCollateralAmountToSwap
-    );
-    IParaSwapRepayAdapter.RepayParams
-      memory repayParams = IParaSwapRepayAdapter.RepayParams({
-        collateralAsset: collateralAsset,
-        maxCollateralAmountToSwap: maxCollateralAmountToSwap,
-        debtRepayAsset: debtAsset,
-        debtRepayAmount: debtRepayAmount,
-        debtRepayMode: 2,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+    IERC20Detailed(collateralAssetAToken).approve(address(repayAdapter), maxCollateralAmountToSwap);
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxCollateralAmountToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: debtRepayAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
 
     IParaSwapRepayAdapter.FlashParams memory flashParams;
     IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
@@ -123,13 +117,7 @@ contract RepayAdapterV3 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(
-      _withinRange(
-        debtTokenBalanceBefore - debtTokenBalanceAfter,
-        debtRepayAmount,
-        2
-      )
-    );
+    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
     _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
@@ -166,20 +154,19 @@ contract RepayAdapterV3 is BaseTest {
 
     skip(1 hours);
 
-    IParaSwapRepayAdapter.RepayParams
-      memory repayParams = IParaSwapRepayAdapter.RepayParams({
-        collateralAsset: collateralAsset,
-        maxCollateralAmountToSwap: maxCollateralAmountToSwap,
-        debtRepayAsset: debtAsset,
-        debtRepayAmount: debtRepayAmount,
-        debtRepayMode: 2,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxCollateralAmountToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: debtRepayAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
 
     IParaSwapRepayAdapter.FlashParams memory flashParams;
-    IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit =  _getPermit(
+    IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit = _getPermit(
       collateralAssetAToken,
       address(repayAdapter),
       maxCollateralAmountToSwap
@@ -194,13 +181,7 @@ contract RepayAdapterV3 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(
-      _withinRange(
-        debtTokenBalanceBefore - debtTokenBalanceAfter,
-        debtRepayAmount,
-        2
-      )
-    );
+    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
     _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
@@ -209,7 +190,7 @@ contract RepayAdapterV3 is BaseTest {
   function test_repay_full_without_extra_token() public {
     uint256 daiSupplyAmount = 12000e18;
     uint256 lusdBorrowAmount = 1000e18;
-    
+
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
@@ -230,22 +211,18 @@ contract RepayAdapterV3 is BaseTest {
       true
     );
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(repayAdapter),
-      maxCollateralAssetToSwap
-    );
+    IERC20Detailed(collateralAssetAToken).approve(address(repayAdapter), maxCollateralAssetToSwap);
     uint256 debtRepayAmount = lusdBorrowAmount;
-    IParaSwapRepayAdapter.RepayParams
-      memory repayParams = IParaSwapRepayAdapter.RepayParams({
-        collateralAsset: collateralAsset,
-        maxCollateralAmountToSwap: maxCollateralAssetToSwap,
-        debtRepayAsset: debtAsset,
-        debtRepayAmount: debtRepayAmount,
-        debtRepayMode: 2,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxCollateralAssetToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: debtRepayAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
 
     IParaSwapRepayAdapter.FlashParams memory flashParams;
     IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
@@ -259,13 +236,7 @@ contract RepayAdapterV3 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(
-      _withinRange(
-        debtTokenBalanceBefore - debtTokenBalanceAfter,
-        debtRepayAmount,
-        2
-      )
-    );
+    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
     assertTrue(debtTokenBalanceAfter == 0);
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
     _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
@@ -274,7 +245,7 @@ contract RepayAdapterV3 is BaseTest {
 
   function test_repay_full_with_flashloan() public {
     uint256 daiSupplyAmount = 12000e18;
-    
+
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
@@ -295,26 +266,22 @@ contract RepayAdapterV3 is BaseTest {
       true
     );
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(repayAdapter),
-      maxDebtAssetToSwap
-    );
-    IParaSwapRepayAdapter.RepayParams
-      memory repayParams = IParaSwapRepayAdapter.RepayParams({
-        collateralAsset: collateralAsset,
-        maxCollateralAmountToSwap: maxDebtAssetToSwap,
-        debtRepayAsset: debtAsset,
-        debtRepayAmount: lusdBorrowAmount,
-        debtRepayMode: 2,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+    IERC20Detailed(collateralAssetAToken).approve(address(repayAdapter), maxDebtAssetToSwap);
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxDebtAssetToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: lusdBorrowAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
     IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
     IParaSwapRepayAdapter.FlashParams memory flashParams = IParaSwapRepayAdapter.FlashParams({
-          flashLoanAsset: collateralAsset,
-          flashLoanAmount: (lusdBorrowAmount*105)/100
-        });    
+      flashLoanAsset: collateralAsset,
+      flashLoanAmount: (lusdBorrowAmount * 105) / 100
+    });
 
     uint256 debtTokenBalanceBefore = IERC20Detailed(debtAssetVToken).balanceOf(user);
     uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
@@ -325,13 +292,7 @@ contract RepayAdapterV3 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(
-      _withinRange(
-        debtTokenBalanceBefore - debtTokenBalanceAfter,
-        lusdBorrowAmount,
-        2
-      )
-    );
+    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, lusdBorrowAmount, 2));
     assertTrue(debtTokenBalanceAfter == 0);
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
     _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);

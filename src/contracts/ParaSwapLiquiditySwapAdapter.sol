@@ -15,9 +15,9 @@ import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 
 /**
  * @title ParaSwapLiquiditySwapAdapter
- * @notice Implements the logic of swapping collateral asset to another collateral asset
- * @dev Swaps the existing collateral asset to another asset. The asset received from swap will be provided as a collateral on behalf of user
- *      Uses the BaseParaSwapSellAdapter(exact in) for swapping the asset 
+ * @notice ParaSwap Adapter to perform a swap of collateral from one asset to another.
+ * @dev Swaps the existing collateral asset to another asset. It flash-borrows assets from the Aave Pool in case the
+ * user position does not remain collateralized during the operation.
  * @author Aave Labs
  **/
 abstract contract ParaSwapLiquiditySwapAdapter is
@@ -36,7 +36,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
    * @param addressesProvider The address of the Aave PoolAddressesProvider contract
    * @param pool The address of the Aave Pool contract
    * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
-   * @param owner The address to transfer ownership to
+   * @param owner The address of the owner
    */
   constructor(
     IPoolAddressesProvider addressesProvider,
@@ -53,8 +53,8 @@ abstract contract ParaSwapLiquiditySwapAdapter is
   }
 
   /**
-   * @notice Renews the reserve's allowance(of this contract) to infinite for the Aave pool
-   * @param reserve the address of reserve
+   * @notice Renews the asset allowance to the Aave Pool
+   * @param reserve The address of the asset
    */
   function renewAllowance(address reserve) public {
     IERC20(reserve).safeApprove(address(POOL), 0);
@@ -74,21 +74,23 @@ abstract contract ParaSwapLiquiditySwapAdapter is
       require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
       liquiditySwapParams.collateralAmountToSwap = balance;
     }
+
     // Non-zero amount if wanting to flashloan, otherwise 0
     if (flashParams.flashLoanAmount == 0) {
       _swapAndDeposit(liquiditySwapParams, collateralATokenPermit);
     } else {
+      // flashloan of the current collateral asset
       _flash(liquiditySwapParams, flashParams, collateralATokenPermit);
     }
   }
 
   /**
-   * @notice Executes an operation after receiving the flash-borrowed assets
-   * @dev Ensure that the contract can return the debt + premium, e.g., has
-   *      enough funds to repay the loan and has approved the Pool to pull the total amount.
-   *      only callable by Aave pool. Swaps the received flash-borrowed asset minus premium to newCollateralAsset
-   *      Supplies the received newCollateralAsset to Aave pool
-   *      flash-borrowed assets should be same as old collateral asset
+   * @dev Executes the collateral swap after receiving the flash-borrowed assets
+   * @dev Workflow:
+   * 1. Sell flash-borrowed asset for new collateral asset
+   * 2. Supply new collateral asset
+   * 3. Pull aToken collateral from user and withdraw from Pool
+   * 4. Repay flashloan
    * @param assets The addresses of the flash-borrowed assets
    * @param amounts The amounts of the flash-borrowed assets
    * @param premiums The premiums of the flash-borrowed assets
@@ -108,16 +110,15 @@ abstract contract ParaSwapLiquiditySwapAdapter is
 
     (
       LiquiditySwapParams memory liquiditySwapParams,
-      FlashParams memory flashParams,
       PermitInput memory collateralATokenPermit
-    ) = abi.decode(params, (LiquiditySwapParams, FlashParams, PermitInput));
+    ) = abi.decode(params, (LiquiditySwapParams, PermitInput));
 
     address flashLoanAsset = assets[0];
     uint256 flashLoanAmount = amounts[0];
     uint256 flashLoanPremium = premiums[0];
 
-    // sell(exact in) the (flashLoanAmount - flashLoanPremium) amount of old collateral asset(flash-borrowed asset) to new collateral asset
-    // flashLoanPremium amount of flash-borrowed asset stays in the contract
+    // sell the flashLoanAmount minus the premium, so flashloan repayment is guaranteed
+    // flashLoan premium stays in the contract
     uint256 amountReceived = _sellOnParaSwap(
       liquiditySwapParams.offset,
       liquiditySwapParams.paraswapData,
@@ -126,8 +127,16 @@ abstract contract ParaSwapLiquiditySwapAdapter is
       flashLoanAmount - flashLoanPremium,
       liquiditySwapParams.newCollateralAmount
     );
-    // supplies the received asset(newCollateralAsset) from swap to Aave pool
-    _supply(liquiditySwapParams.newCollateralAsset, amountReceived, liquiditySwapParams.user, REFERRER);
+
+    // supplies the received asset(newCollateralAsset) from swap to Aave Pool
+    _conditionalRenewAllowance(liquiditySwapParams.newCollateralAsset, amountReceived);
+    _supply(
+      liquiditySwapParams.newCollateralAsset,
+      amountReceived,
+      liquiditySwapParams.user,
+      REFERRER
+    );
+
     // pulls flashLoanAmount amount of flash-borrowed asset from the user
     _pullATokenAndWithdraw(
       flashLoanAsset,
@@ -135,15 +144,21 @@ abstract contract ParaSwapLiquiditySwapAdapter is
       flashLoanAmount,
       collateralATokenPermit
     );
+
+    // flashloan repayment
     _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount + flashLoanPremium);
     return true;
   }
 
   /**
-   * @dev Swaps the collateral asset and supplies the received asset to the Aave pool
-   * @param liquiditySwapParams Decoded swap parameters
+   * @dev Swaps the collateral asset and supplies the received asset to the Aave Pool
+   * @dev Workflow:
+   * 1. Pull aToken collateral from user and withdraw from Pool
+   * 2. Sell asset for new collateral asset
+   * 3. Supply new collateral asset
+   * @param liquiditySwapParams struct describing the liquidity swap
    * @param collateralATokenPermit Permit for aToken corresponding to old collateral asset from the user
-   * @return The amount received from the swap of new collateral asset, that is now supplied to the Aave pool
+   * @return The amount received from the swap of new collateral asset, that is now supplied to the Aave Pool
    */
   function _swapAndDeposit(
     LiquiditySwapParams memory liquiditySwapParams,
@@ -155,6 +170,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
       liquiditySwapParams.collateralAmountToSwap,
       collateralATokenPermit
     );
+
     // sell(exact in) old collateral asset to new collateral asset
     uint256 amountReceived = _sellOnParaSwap(
       liquiditySwapParams.offset,
@@ -165,19 +181,22 @@ abstract contract ParaSwapLiquiditySwapAdapter is
       liquiditySwapParams.newCollateralAmount
     );
 
+    // supply the received asset(newCollateralAsset) from swap to the Aave Pool
     _conditionalRenewAllowance(liquiditySwapParams.newCollateralAsset, amountReceived);
-
-    // supplies the received asset(newCollateralAsset) from swap to Aave pool
-    _supply(liquiditySwapParams.newCollateralAsset, amountReceived, liquiditySwapParams.user, REFERRER);
+    _supply(
+      liquiditySwapParams.newCollateralAsset,
+      amountReceived,
+      liquiditySwapParams.user,
+      REFERRER
+    );
 
     return amountReceived;
   }
 
   /**
-   * @dev Checks if the asset's allowance to Aave pool is greater than or equal to minAmount, 
-   *      else renews the asset's allowance to infinite for the Aave pool
-   * @param asset address of asset 
-   * @param minAmount minimum required allowance to Aave pool
+   * @dev Renews the asset allowance in case the current allowance is below a given threshold
+   * @param asset The address of the asset
+   * @param minAmount The minimum required allowance to the Aave Pool
    */
   function _conditionalRenewAllowance(address asset, uint256 minAmount) internal {
     uint256 allowance = IERC20(asset).allowance(address(this), address(POOL));
@@ -186,10 +205,9 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     }
   }
 
-  /** 
-   * @dev encodes the parameter required by executeOperation function of this contract for performing liquidity swap
-   *      Flash-borrows the old collateral asset from the Aave pool 
-   * @param liquiditySwapParams struct describing the liquidity swap 
+  /**
+   * @dev Triggers the flashloan passing encoded params for the collateral swap
+   * @param liquiditySwapParams struct describing the liquidity swap
    * @param flashParams struct describing flashloan params
    * @param collateralATokenPermit optional permit for old collateral's aToken
    */
@@ -198,7 +216,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) internal virtual {
-    bytes memory params = abi.encode(liquiditySwapParams, flashParams, collateralATokenPermit);
+    bytes memory params = abi.encode(liquiditySwapParams, collateralATokenPermit);
     address[] memory assets = new address[](1);
     assets[0] = flashParams.flashLoanAsset;
     uint256[] memory amounts = new uint256[](1);
@@ -206,6 +224,14 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    POOL.flashLoan(address(this), assets, amounts, interestRateModes, address(this), params, REFERRER);
+    POOL.flashLoan(
+      address(this),
+      assets,
+      amounts,
+      interestRateModes,
+      address(this),
+      params,
+      REFERRER
+    );
   }
 }

@@ -1,0 +1,264 @@
+diff --git a/src/contracts/BaseParaSwapAdapter.sol b/src/contracts/BaseParaSwapAdapter.sol
+index 24e7241..a98f5ac 100644
+--- a/src/contracts/BaseParaSwapAdapter.sol
++++ b/src/contracts/BaseParaSwapAdapter.sol
+@@ -1,10 +1,8 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
+ import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+-import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
+ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+ import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
+ import {IPriceOracleGetter} from '@aave/core-v3/contracts/interfaces/IPriceOracleGetter.sol';
+@@ -21,7 +19,6 @@ import {IBaseParaSwapAdapter} from '../interfaces/IBaseParaSwapAdapter.sol';
+ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseParaSwapAdapter {
+   using SafeERC20 for IERC20;
+   using SafeERC20 for IERC20Detailed;
+-  using SafeERC20 for IERC20WithPermit;
+ 
+   // Max slippage percent allowed
+   uint256 public constant MAX_SLIPPAGE_PERCENT = 3000; // 30%
+diff --git a/src/contracts/BaseParaSwapSellAdapter.sol b/src/contracts/BaseParaSwapSellAdapter.sol
+index 859637c..805ce29 100644
+--- a/src/contracts/BaseParaSwapSellAdapter.sol
++++ b/src/contracts/BaseParaSwapSellAdapter.sol
+@@ -1,11 +1,10 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
+-import {SafeMath} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeMath.sol';
+ import {PercentageMath} from '@aave/core-v3/contracts/protocol/libraries/math/PercentageMath.sol';
+ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
++import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
+ import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
+ import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
+@@ -26,14 +25,14 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
+     IParaSwapAugustusRegistry augustusRegistry
+   ) BaseParaSwapAdapter(addressesProvider, pool) {
+     // Do something on Augustus registry to check the right contract was passed
+-    require(!augustusRegistry.isValidAugustus(address(0)));
++    require(!augustusRegistry.isValidAugustus(address(0)), 'Not a valid Augustus address');
+     AUGUSTUS_REGISTRY = augustusRegistry;
+   }
+ 
+   /**
+    * @dev Swaps a token for another using ParaSwap
+    * @param fromAmountOffset Offset of fromAmount in Augustus calldata if it should be overwritten, otherwise 0
+-   * @param paraswapData Calldata for ParaSwap's AugustusSwapper contract
++   * @param paraswapData Data for Paraswap Adapter
+    * @param assetToSwapFrom Address of the asset to be swapped from
+    * @param assetToSwapTo Address of the asset to be swapped to
+    * @param amountToSwap Amount to be swapped
+@@ -100,7 +99,7 @@ abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
+       }
+     }
+     require(
+-      assetToSwapFrom.balanceOf(address(this)) == balanceBeforeAssetFrom - amountToSwap,
++      amountToSwap == balanceBeforeAssetFrom - assetToSwapFrom.balanceOf(address(this)),
+       'WRONG_BALANCE_AFTER_SWAP'
+     );
+     amountReceived = assetToSwapTo.balanceOf(address(this)) - balanceBeforeAssetTo;
+diff --git a/src/contracts/ParaSwapLiquiditySwapAdapter.sol b/src/contracts/ParaSwapLiquiditySwapAdapter.sol
+index f2d7a20..4b5de7f 100644
+--- a/src/contracts/ParaSwapLiquiditySwapAdapter.sol
++++ b/src/contracts/ParaSwapLiquiditySwapAdapter.sol
+@@ -17,7 +17,7 @@ import {IParaSwapLiquiditySwapAdapter} from '../interfaces/IParaSwapLiquiditySwa
+ /**
+  * @title ParaSwapLiquiditySwapAdapter
+  * @notice ParaSwap Adapter to perform a swapping of one collateral asset to another collateral asset.
+- * @author AAVE
++ * @author Aave Labs
+  **/
+ abstract contract ParaSwapLiquiditySwapAdapter is
+   BaseParaSwapSellAdapter,
+@@ -62,12 +62,14 @@ abstract contract ParaSwapLiquiditySwapAdapter is
+     FlashParams memory flashParams,
+     PermitInput memory collateralATokenPermit
+   ) external nonReentrant {
++    // Offset in August calldata if wanting to swap all balance, otherwise 0
+     if (liquiditySwapParams.offset != 0) {
+       (, , address aToken) = _getReserveData(liquiditySwapParams.collateralAsset);
+       uint256 balance = IERC20WithPermit(aToken).balanceOf(msg.sender);
+       require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
+       liquiditySwapParams.collateralAmountToSwap = balance;
+     }
++    // Non-zero amount if wanting to flashloan, otherwise 0
+     if (flashParams.flashLoanAmount == 0) {
+       _swapAndDeposit(liquiditySwapParams, collateralATokenPermit, msg.sender);
+     } else {
+@@ -88,6 +90,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
+     uint256[] memory interestRateModes = new uint256[](1);
+     interestRateModes[0] = 0;
+ 
++    // TODO: OnBehalfOf can be adapter address?
+     POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
+   }
+ 
+@@ -169,7 +172,7 @@ abstract contract ParaSwapLiquiditySwapAdapter is
+ 
+     _conditionalRenewAllowance(liquiditySwapParams.newCollateralAsset, amountReceived);
+ 
+-    _supply(liquiditySwapParams.newCollateralAsset, amountReceived, user, 0);
++    _supply(liquiditySwapParams.newCollateralAsset, amountReceived, user, REFERRER);
+     return amountReceived;
+   }
+ 
+diff --git a/src/contracts/ParaSwapLiquiditySwapAdapterV2.sol b/src/contracts/ParaSwapLiquiditySwapAdapterV2.sol
+index 17c62de..ee8f336 100644
+--- a/src/contracts/ParaSwapLiquiditySwapAdapterV2.sol
++++ b/src/contracts/ParaSwapLiquiditySwapAdapterV2.sol
+@@ -1,11 +1,11 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {ParaSwapLiquiditySwapAdapter} from './ParaSwapLiquiditySwapAdapter.sol';
+ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+ import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+ import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
+ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
++import {ParaSwapLiquiditySwapAdapter} from './ParaSwapLiquiditySwapAdapter.sol';
+ 
+ /**
+  * @title ParaSwapLiquiditySwapAdapterV2
+diff --git a/src/contracts/ParaSwapLiquiditySwapAdapterV3.sol b/src/contracts/ParaSwapLiquiditySwapAdapterV3.sol
+index 727ec70..a19f67a 100644
+--- a/src/contracts/ParaSwapLiquiditySwapAdapterV3.sol
++++ b/src/contracts/ParaSwapLiquiditySwapAdapterV3.sol
+@@ -1,13 +1,12 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {ParaSwapDebtSwapAdapter} from './ParaSwapDebtSwapAdapter.sol';
+ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+ import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+ import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
+ import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
+-import {ParaSwapLiquiditySwapAdapter} from './ParaSwapLiquiditySwapAdapter.sol';
+ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
++import {ParaSwapLiquiditySwapAdapter} from './ParaSwapLiquiditySwapAdapter.sol';
+ 
+ /**
+  * @title ParaSwapLiquiditySwapAdapterV3
+diff --git a/src/contracts/ParaSwapRepayAdapter.sol b/src/contracts/ParaSwapRepayAdapter.sol
+index f66f4a6..6cd67db 100644
+--- a/src/contracts/ParaSwapRepayAdapter.sol
++++ b/src/contracts/ParaSwapRepayAdapter.sol
+@@ -2,6 +2,7 @@
+ pragma solidity ^0.8.10;
+ 
+ import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
++// TODO Remove IERC20Detailed
+ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+ import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+ import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
+@@ -18,7 +19,7 @@ import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
+ /**
+  * @title ParaSwapRepayAdapter
+  * @notice ParaSwap Adapter to repay a debt of asset with collateral asset.
+- * @author AAVE
++ * @author Aave Labs
+  **/
+ abstract contract ParaSwapRepayAdapter is
+   BaseParaSwapBuyAdapter,
+@@ -97,7 +98,7 @@ abstract contract ParaSwapRepayAdapter is
+     uint256[] memory interestRateModes = new uint256[](1);
+     interestRateModes[0] = 0;
+ 
+-    POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER);
++    POOL.flashLoan(address(this), assets, amounts, interestRateModes, msg.sender, params, REFERRER); // TODO onBehalfOf
+   }
+ 
+   /**
+@@ -132,7 +133,7 @@ abstract contract ParaSwapRepayAdapter is
+     uint256 flashLoanPremium = premiums[0];
+ 
+     uint256 excessBefore = IERC20Detailed(repayParams.debtRepayAsset).balanceOf(address(this));
+-    //swap the flashLoanAsset to debtRepaysset
++    //swap the flashLoanAsset to debtRepayAsset
+     uint256 amountSold = _buyOnParaSwap(
+       repayParams.offset,
+       repayParams.paraswapData,
+diff --git a/src/contracts/ParaSwapWithdrawSwapAdapter.sol b/src/contracts/ParaSwapWithdrawSwapAdapter.sol
+index f8709c3..b0e02e6 100644
+--- a/src/contracts/ParaSwapWithdrawSwapAdapter.sol
++++ b/src/contracts/ParaSwapWithdrawSwapAdapter.sol
+@@ -1,16 +1,15 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
+-import {IParaSwapWithdrawSwapAdapter} from '../interfaces/IParaSwapWithdrawSwapAdapter.sol';
++import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+ import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
+-import {IERC20WithPermit} from '@aave/core-v3/contracts/interfaces/IERC20WithPermit.sol';
+ import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+-import {GPv2SafeERC20} from '@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
+ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+-import {BaseParaSwapAdapter} from '../contracts/BaseParaSwapAdapter.sol';
+-import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
++import {GPv2SafeERC20} from '@aave/core-v3/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
++import {IParaSwapWithdrawSwapAdapter} from '../interfaces/IParaSwapWithdrawSwapAdapter.sol';
+ import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
++import {BaseParaSwapAdapter} from './contracts/BaseParaSwapAdapter.sol';
++import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
+ 
+ /**
+  * @title ParaSwapWithdrawSwapAdapter
+@@ -21,7 +20,6 @@ abstract contract ParaSwapWithdrawSwapAdapter is
+   ReentrancyGuard,
+   IParaSwapWithdrawSwapAdapter
+ {
+-  using GPv2SafeERC20 for IERC20WithPermit;
+   using GPv2SafeERC20 for IERC20;
+ 
+   /**
+@@ -48,7 +46,7 @@ abstract contract ParaSwapWithdrawSwapAdapter is
+     (, , address aToken) = _getReserveData(withdrawSwapParams.oldAsset);
+ 
+     if (withdrawSwapParams.allBalanceOffset != 0) {
+-      uint256 balance = IERC20WithPermit(aToken).balanceOf(msg.sender);
++      uint256 balance = IERC20(aToken).balanceOf(msg.sender);
+       require(balance <= withdrawSwapParams.oldAssetAmount, 'INSUFFICIENT_AMOUNT_TO_SWAP');
+       withdrawSwapParams.oldAssetAmount = balance;
+     }
+diff --git a/src/contracts/ParaSwapWithdrawSwapAdapterV2.sol b/src/contracts/ParaSwapWithdrawSwapAdapterV2.sol
+index 3d7b4f3..6008d0b 100644
+--- a/src/contracts/ParaSwapWithdrawSwapAdapterV2.sol
++++ b/src/contracts/ParaSwapWithdrawSwapAdapterV2.sol
+@@ -1,11 +1,11 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {ParaSwapWithdrawSwapAdapter} from './ParaSwapWithdrawSwapAdapter.sol';
+ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+-import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+ import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
++import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
++import {ParaSwapWithdrawSwapAdapter} from './ParaSwapWithdrawSwapAdapter.sol';
+ 
+ /**
+  * @title ParaSwapWithdrawSwapAdapterV2
+diff --git a/src/contracts/ParaSwapWithdrawSwapAdapterV3.sol b/src/contracts/ParaSwapWithdrawSwapAdapterV3.sol
+index 547a31a..1b1ba92 100644
+--- a/src/contracts/ParaSwapWithdrawSwapAdapterV3.sol
++++ b/src/contracts/ParaSwapWithdrawSwapAdapterV3.sol
+@@ -1,11 +1,9 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {ParaSwapDebtSwapAdapter} from './ParaSwapDebtSwapAdapter.sol';
+ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+-import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+-import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
+ import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
++import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+ import {ParaSwapWithdrawSwapAdapter} from './ParaSwapWithdrawSwapAdapter.sol';
+ import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
+ 

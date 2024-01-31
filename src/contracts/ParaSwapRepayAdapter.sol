@@ -4,21 +4,21 @@ pragma solidity ^0.8.10;
 import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
 import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
-import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapRepayAdapter} from '../interfaces/IParaSwapRepayAdapter.sol';
-import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
 
 /**
  * @title ParaSwapRepayAdapter
- * @notice Implements the logic of swapping collateral asset to another asset and repaying the received asset from swap
- * @dev Swaps the existing collateral asset to another asset. The asset received from swap will be repayed to the Aave pool
+ * @notice ParaSwap Adapter to repay debt with collateral.
+ * @dev Swaps the existing collateral asset to debt asset in order to repay the debt. It flash-borrows assets from the Aave Pool in case the
+ * user position does not remain collateralized during the operation.
  * @author Aave Labs
  **/
 abstract contract ParaSwapRepayAdapter is
@@ -37,7 +37,7 @@ abstract contract ParaSwapRepayAdapter is
    * @param addressesProvider The address of the Aave PoolAddressesProvider contract
    * @param pool The address of the Aave Pool contract
    * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
-   * @param owner The address to transfer ownership to
+   * @param owner The address of the owner
    */
   constructor(
     IPoolAddressesProvider addressesProvider,
@@ -54,8 +54,8 @@ abstract contract ParaSwapRepayAdapter is
   }
 
   /**
-   * @notice Renews the reserve's allowance(of this contract) to infinite for the Aave pool
-   * @param reserve the address of reserve
+   * @notice Renews the asset allowance to the Aave Pool
+   * @param reserve The address of the asset
    */
   function renewAllowance(address reserve) public {
     IERC20(reserve).safeApprove(address(POOL), 0);
@@ -68,35 +68,44 @@ abstract contract ParaSwapRepayAdapter is
     FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) external nonReentrant {
-    repayParams.debtRepayAmount = getDebtRepayAmount(
+    // Refresh the debt amount to repay
+    repayParams.debtRepayAmount = _getDebtRepayAmount(
       IERC20(repayParams.debtRepayAsset),
       repayParams.debtRepayMode,
       repayParams.offset,
       repayParams.debtRepayAmount,
       repayParams.user
     );
+
+    // Non-zero amount if wanting to flashloan, otherwise 0
     if (flashParams.flashLoanAmount == 0) {
-      uint256 excessBefore = IERC20(repayParams.collateralAsset).balanceOf(address(this));
+      uint256 collateralBalanceBefore = IERC20(repayParams.collateralAsset).balanceOf(
+        address(this)
+      );
       _swapAndRepay(repayParams, collateralATokenPermit);
-      uint256 excessAfter = IERC20(repayParams.collateralAsset).balanceOf(address(this));
-      uint256 excess = excessAfter > excessBefore ? excessAfter - excessBefore : 0;
-      if (excess > 0) {
-        _conditionalRenewAllowance(repayParams.collateralAsset, excess);
-        _supply(repayParams.collateralAsset, excess, repayParams.user, REFERRER);
+
+      // Supply on behalf of the user in case of excess of collateral asset after the swap
+      uint256 collateralBalanceAfter = IERC20(repayParams.collateralAsset).balanceOf(address(this));
+      uint256 collateralExcess = collateralBalanceAfter > collateralBalanceBefore
+        ? collateralBalanceAfter - collateralBalanceBefore
+        : 0;
+      if (collateralExcess > 0) {
+        _conditionalRenewAllowance(repayParams.collateralAsset, collateralExcess);
+        _supply(repayParams.collateralAsset, collateralExcess, repayParams.user, REFERRER);
       }
     } else {
+      // flashloan of the current collateral asset to use for repayment
       _flash(repayParams, flashParams, collateralATokenPermit);
     }
   }
 
   /**
-   * @notice Executes an operation after receiving the flash-borrowed assets
-   * @dev Ensure that the contract can return the debt + premium, e.g., has
-   *      enough funds to repay and has approved the Pool to pull the total amount
-   *      only callable by Aave pool. Swaps(exact out) the received flash-borrowed asset to debtRepayAsset
-   *      Repays the received debtRepayAsset to Aave pool
-   *      flash-borrowed asset should be same as one of the collateral asset
-   *      flash-borrowed asset will be pulled from user to repay the flashloan
+   * @dev Executes the repay with collateral after receiving the flash-borrowed assets
+   * @dev Workflow:
+   * 1. Buy debt asset by providing the flash-borrowed assets in exchange
+   * 2. Repay debt
+   * 3. Pull aToken collateral from user and withdraw from Pool
+   * 4. Repay flashloan
    * @param assets The addresses of the flash-borrowed assets
    * @param amounts The amounts of the flash-borrowed assets
    * @param premiums The premiums of the flash-borrowed assets
@@ -114,17 +123,16 @@ abstract contract ParaSwapRepayAdapter is
     require(msg.sender == address(POOL), 'CALLER_MUST_BE_POOL');
     require(initiator == address(this), 'INITIATOR_MUST_BE_THIS');
 
-    (
-      RepayParams memory repayParams,
-      FlashParams memory flashParams,
-      PermitInput memory collateralATokenPermit
-    ) = abi.decode(params, (RepayParams, FlashParams, PermitInput));
+    (RepayParams memory repayParams, PermitInput memory collateralATokenPermit) = abi.decode(
+      params,
+      (RepayParams, PermitInput)
+    );
 
     address flashLoanAsset = assets[0];
     uint256 flashLoanAmount = amounts[0];
     uint256 flashLoanPremium = premiums[0];
 
-    // swap(exact out) the flashLoanAsset to debtRepayAsset. (flashLoanAmount - amountSold) stays in the contract
+    // buys the debt asset by providing the flashloanAsset
     uint256 amountSold = _buyOnParaSwap(
       repayParams.offset,
       repayParams.paraswapData,
@@ -133,7 +141,8 @@ abstract contract ParaSwapRepayAdapter is
       flashLoanAmount,
       repayParams.debtRepayAmount
     );
-    // allowance to Aave pool contract for repaying the debt
+
+    // repays debt
     _conditionalRenewAllowance(repayParams.debtRepayAsset, repayParams.debtRepayAmount);
     POOL.repay(
       repayParams.debtRepayAsset,
@@ -141,20 +150,35 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.debtRepayMode,
       repayParams.user
     );
+
+    // pulls only the amount needed from the user for the flashloan repayment
+    // flashLoanAmount - amountSold = excess in the contract from swap
+    // flashLoanAmount + flashLoanPremium = flashloan repayment
+    // the amount needed is:
+    // flashLoanAmount + flashLoanPremium - (flashLoanAmount - amountSold)
+    // equivalent to
+    // flashLoanPremium + amountSold
     _pullATokenAndWithdraw(
       flashLoanAsset,
       repayParams.user,
-      flashLoanAmount + flashLoanPremium - (flashLoanAmount - amountSold), //(flashLoanAmount - amountSold) is the amount remaining in the contract after buy order on paraswap.
+      flashLoanPremium + amountSold,
       collateralATokenPermit
     );
+
+    // flashloan repayment
     _conditionalRenewAllowance(flashLoanAsset, flashLoanAmount + flashLoanPremium);
     return true;
   }
 
   /**
    * @dev Swaps the collateral asset and repays the debt of received asset from swap
-   * @param repayParams Decoded repay parameters
+   * @dev Workflow:
+   * 1. Pull aToken collateral from user and withdraw from Pool
+   * 2. Buy debt asset by providing the withdrawn collateral in exchange
+   * 3. Repay debt
+   * @param repayParams struct describing the debt swap
    * @param collateralATokenPermit Permit for withdrawing collateral token from the pool
+   * @return The amount of withdrawn collateral sold in the swap
    */
   function _swapAndRepay(
     RepayParams memory repayParams,
@@ -166,8 +190,8 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.maxCollateralAmountToSwap,
       collateralATokenPermit
     );
-    // swap(exact out) collateralAsset to debtRepayAsset. It is not guaranteed that collateralAmountReceived will be used. So, there can be 
-    // excess of collateralAsset which will be supplied to Aave pool on behalf of user
+
+    // buy(exact out) of debt asset by providing the withdrawn collateral in exchange
     uint256 amountSold = _buyOnParaSwap(
       repayParams.offset,
       repayParams.paraswapData,
@@ -177,6 +201,7 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.debtRepayAmount
     );
 
+    // repay the debt with the bought asset (debtRepayAsset) from the swap
     _conditionalRenewAllowance(repayParams.debtRepayAsset, repayParams.debtRepayAmount);
     POOL.repay(
       repayParams.debtRepayAsset,
@@ -184,13 +209,13 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.debtRepayMode,
       repayParams.user
     );
+
     return amountSold;
   }
 
-  /** 
-   * @dev encodes the parameter required by executeOperation function of this contract for performing swap and repay.
-   *      Flash-borrows the collateral asset from the Aave pool 
-   * @param repayParams struct describing the repay swap 
+  /**
+   * @dev Triggers the flashloan passing encoded params for the repay with collateral
+   * @param repayParams struct describing the repay swap
    * @param flashParams struct describing flashloan params
    * @param collateralATokenPermit optional permit for old collateral's aToken
    */
@@ -199,7 +224,7 @@ abstract contract ParaSwapRepayAdapter is
     FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) internal virtual {
-    bytes memory params = abi.encode(repayParams, flashParams, collateralATokenPermit);
+    bytes memory params = abi.encode(repayParams, collateralATokenPermit);
     address[] memory assets = new address[](1);
     assets[0] = flashParams.flashLoanAsset;
     uint256[] memory amounts = new uint256[](1);
@@ -207,14 +232,21 @@ abstract contract ParaSwapRepayAdapter is
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
-    POOL.flashLoan(address(this), assets, amounts, interestRateModes, address(this), params, REFERRER);
+    POOL.flashLoan(
+      address(this),
+      assets,
+      amounts,
+      interestRateModes,
+      address(this),
+      params,
+      REFERRER
+    );
   }
 
   /**
-   * @dev Checks if the asset's allowance to Aave pool is greater than or equal to minAmount, 
-   *      else renews the asset's allowance to infinite for the Aave pool
-   * @param asset address of asset 
-   * @param minAmount minimum required allowance to Aave pool
+   * @dev Renews the asset allowance in case the current allowance is below a given threshold
+   * @param asset The address of the asset
+   * @param minAmount The minimum required allowance to the Aave Pool
    */
   function _conditionalRenewAllowance(address asset, uint256 minAmount) internal {
     uint256 allowance = IERC20(asset).allowance(address(this), address(POOL));
@@ -223,34 +255,37 @@ abstract contract ParaSwapRepayAdapter is
     }
   }
 
-  /** 
-   * @dev returns the amount of debt to repay
-   * @param debtAsset address of asset to repay the debt
-   * @param rateMode interest rate mode for the debt to repay(i.e. STABLE or VARIABLE)
-   * @param buyAllBalanceOffset offset in calldata in case of all debt is to be repaid
-   * @param debtRepayAmount the amount of debt to repay
-   * @param initiator the user for whom the debt is to be repaid
-   * @return the amount of debt to be repaid
+  /**
+   * @dev Returns the amount of debt to repay for the user
+   * @param debtAsset The address of the asset to repay the debt
+   * @param rateMode The interest rate mode of the debt (e.g. STABLE or VARIABLE)
+   * @param buyAllBalanceOffset offset in calldata in case all debt is repaid, otherwise 0
+   * @param debtRepayAmount The amount of debt to repay
+   * @param user The address user for whom the debt is repaid
+   * @return The amount of debt to be repaid
    */
-  function getDebtRepayAmount(
+  function _getDebtRepayAmount(
     IERC20 debtAsset,
     uint256 rateMode,
     uint256 buyAllBalanceOffset,
     uint256 debtRepayAmount,
-    address initiator
-  ) private view returns (uint256) {
+    address user
+  ) internal view returns (uint256) {
     (address vDebtToken, address sDebtToken, ) = _getReserveData(address(debtAsset));
 
     address debtToken = DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.STABLE
       ? sDebtToken
       : vDebtToken;
-
-    uint256 currentDebt = IERC20(debtToken).balanceOf(initiator);
+    uint256 currentDebt = IERC20(debtToken).balanceOf(user);
 
     if (buyAllBalanceOffset != 0) {
+      // Sanity check to ensure the passed value `debtRepayAmount` is higher than the current debt
+      // when repaying all debt.
       require(currentDebt <= debtRepayAmount, 'INSUFFICIENT_AMOUNT_TO_REPAY');
       debtRepayAmount = currentDebt;
     } else {
+      // Sanity check to ensure the passed value `debtRepayAmount` is less than the current debt
+      // when repaying the exact amount
       require(debtRepayAmount <= currentDebt, 'INVALID_DEBT_REPAY_AMOUNT');
     }
 

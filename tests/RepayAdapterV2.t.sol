@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IACLManager} from '@aave/core-v3/contracts/interfaces/IACLManager.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {Errors} from 'aave-address-book/AaveV2.sol';
@@ -10,9 +9,7 @@ import {AaveV2Ethereum, AaveV2EthereumAssets, ILendingPool} from 'aave-address-b
 import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapRepayAdapterV2} from '../src/contracts/ParaSwapRepayAdapterV2.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
-import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
 import {IParaSwapRepayAdapter} from '../src/interfaces/IParaSwapRepayAdapter.sol';
-import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 
 contract RepayAdapterV2 is BaseTest {
@@ -91,21 +88,17 @@ contract RepayAdapterV2 is BaseTest {
 
     skip(1 hours);
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(repayAdapter),
-      maxCollateralAmountToSwap
-    );
-    IParaSwapRepayAdapter.RepayParams
-      memory repayParams = IParaSwapRepayAdapter.RepayParams({
-        collateralAsset: collateralAsset,
-        maxCollateralAmountToSwap: maxCollateralAmountToSwap,
-        debtRepayAsset: debtAsset,
-        debtRepayAmount: debtRepayAmount,
-        debtRepayMode: 2,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+    IERC20Detailed(collateralAssetAToken).approve(address(repayAdapter), maxCollateralAmountToSwap);
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxCollateralAmountToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: debtRepayAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
 
     IParaSwapRepayAdapter.FlashParams memory flashParams;
     IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
@@ -119,13 +112,7 @@ contract RepayAdapterV2 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(
-      _withinRange(
-        debtTokenBalanceBefore - debtTokenBalanceAfter,
-        debtRepayAmount,
-        2
-      )
-    );
+    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
     _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
@@ -162,20 +149,19 @@ contract RepayAdapterV2 is BaseTest {
 
     skip(1 hours);
 
-    IParaSwapRepayAdapter.RepayParams
-      memory repayParams = IParaSwapRepayAdapter.RepayParams({
-        collateralAsset: collateralAsset,
-        maxCollateralAmountToSwap: maxCollateralAmountToSwap,
-        debtRepayAsset: debtAsset,
-        debtRepayAmount: debtRepayAmount,
-        debtRepayMode: 2,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxCollateralAmountToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: debtRepayAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
 
     IParaSwapRepayAdapter.FlashParams memory flashParams;
-    IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit =  _getPermit(
+    IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit = _getPermit(
       collateralAssetAToken,
       address(repayAdapter),
       maxCollateralAmountToSwap
@@ -190,13 +176,7 @@ contract RepayAdapterV2 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(
-      _withinRange(
-        debtTokenBalanceBefore - debtTokenBalanceAfter,
-        debtRepayAmount,
-        2
-      )
-    );
+    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
     _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
     _invariant(address(repayAdapter), collateralAssetAToken, debtAssetVToken);
@@ -205,7 +185,7 @@ contract RepayAdapterV2 is BaseTest {
   function test_repay_full_without_extra_token() public {
     uint256 daiSupplyAmount = 12000e18;
     uint256 lusdBorrowAmount = 1000e18;
-    
+
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
@@ -226,22 +206,18 @@ contract RepayAdapterV2 is BaseTest {
       true
     );
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(repayAdapter),
-      maxCollateralAssetToSwap
-    );
+    IERC20Detailed(collateralAssetAToken).approve(address(repayAdapter), maxCollateralAssetToSwap);
     uint256 debtRepayAmount = lusdBorrowAmount;
-    IParaSwapRepayAdapter.RepayParams
-      memory repayParams = IParaSwapRepayAdapter.RepayParams({
-        collateralAsset: collateralAsset,
-        maxCollateralAmountToSwap: maxCollateralAssetToSwap,
-        debtRepayAsset: debtAsset,
-        debtRepayAmount: debtRepayAmount,
-        debtRepayMode: 2,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxCollateralAssetToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: debtRepayAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
 
     IParaSwapRepayAdapter.FlashParams memory flashParams;
     IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
@@ -255,13 +231,7 @@ contract RepayAdapterV2 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(
-      _withinRange(
-        debtTokenBalanceBefore - debtTokenBalanceAfter,
-        debtRepayAmount,
-        2
-      )
-    );
+    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
     assertTrue(debtTokenBalanceAfter == 0);
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
     _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
@@ -270,7 +240,7 @@ contract RepayAdapterV2 is BaseTest {
 
   function test_repay_full_with_flashloan() public {
     uint256 daiSupplyAmount = 12000e18;
-    
+
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
@@ -291,26 +261,22 @@ contract RepayAdapterV2 is BaseTest {
       true
     );
 
-    IERC20Detailed(collateralAssetAToken).approve(
-      address(repayAdapter),
-      maxDebtAssetToSwap
-    );
-    IParaSwapRepayAdapter.RepayParams
-      memory repayParams = IParaSwapRepayAdapter.RepayParams({
-        collateralAsset: collateralAsset,
-        maxCollateralAmountToSwap: maxDebtAssetToSwap,
-        debtRepayAsset: debtAsset,
-        debtRepayAmount: lusdBorrowAmount,
-        debtRepayMode: 2,
-        offset: psp.offset,
-        user: user,
-        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
-      });
+    IERC20Detailed(collateralAssetAToken).approve(address(repayAdapter), maxDebtAssetToSwap);
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxDebtAssetToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: lusdBorrowAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
     IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
     IParaSwapRepayAdapter.FlashParams memory flashParams = IParaSwapRepayAdapter.FlashParams({
-          flashLoanAsset: collateralAsset,
-          flashLoanAmount: (lusdBorrowAmount*105)/100
-      });    
+      flashLoanAsset: collateralAsset,
+      flashLoanAmount: (lusdBorrowAmount * 105) / 100
+    });
 
     uint256 debtTokenBalanceBefore = IERC20Detailed(debtAssetVToken).balanceOf(user);
     uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
@@ -321,13 +287,7 @@ contract RepayAdapterV2 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(
-      _withinRange(
-        debtTokenBalanceBefore - debtTokenBalanceAfter,
-        lusdBorrowAmount,
-        2
-      )
-    );
+    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, lusdBorrowAmount, 2));
     assertTrue(debtTokenBalanceAfter == 0);
     assertLt(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore);
     _invariant(address(repayAdapter), collateralAsset, collateralAssetAToken);
@@ -351,5 +311,4 @@ contract RepayAdapterV2 is BaseTest {
   function _withinRange(uint256 a, uint256 b, uint256 diff) internal returns (bool) {
     return stdMath.delta(a, b) <= diff;
   }
-
 }

@@ -5,12 +5,14 @@ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAd
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
-import {ParaSwapRepayAdapter} from './ParaSwapRepayAdapter.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
+import {ParaSwapRepayAdapter} from './ParaSwapRepayAdapter.sol';
 
 /**
  * @title ParaSwapRepayAdapterV3
- * @notice Provides the functionality of ParaSwapRepayAdapter for Aave V3 pool
+ * @notice ParaSwap Adapter to repay debt with collateral.
+ * @dev It is specifically designed for Aave V3
+ * @author Aave Labs
  **/
 contract ParaSwapRepayAdapterV3 is ParaSwapRepayAdapter {
   /**
@@ -18,7 +20,7 @@ contract ParaSwapRepayAdapterV3 is ParaSwapRepayAdapter {
    * @param addressesProvider The address of the Aave PoolAddressesProvider contract
    * @param pool The address of the Aave Pool contract
    * @param augustusRegistry The address of the Paraswap AugustusRegistry contract
-   * @param owner The address to transfer ownership to
+   * @param owner The address of the owner
    */
   constructor(
     IPoolAddressesProvider addressesProvider,

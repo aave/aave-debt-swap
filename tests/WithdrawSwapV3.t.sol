@@ -10,7 +10,6 @@ import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapWithdrawSwapAdapterV3} from '../src/contracts/ParaSwapWithdrawSwapAdapterV3.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
 import {IParaSwapWithdrawSwapAdapter} from '../src/interfaces/IParaSwapWithdrawSwapAdapter.sol';
-import {BaseParaSwapAdapter} from '../src/contracts/BaseParaSwapAdapter.sol';
 import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 
@@ -53,6 +52,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: 0,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -85,6 +85,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: 0,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -115,6 +116,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: swapAmount,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
     IBaseParaSwapAdapter.PermitInput memory tokenPermit;
@@ -152,6 +154,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: swapAmount,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -195,6 +198,7 @@ contract WithdrawSwapV3Test is BaseTest {
         newAsset: newAsset,
         minAmountToReceive: swapAmount,
         allBalanceOffset: psp.offset,
+        user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
     IBaseParaSwapAdapter.PermitInput memory tokenPermit;

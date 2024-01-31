@@ -65,7 +65,6 @@ abstract contract ParaSwapRepayAdapter is
   /// @inheritdoc IParaSwapRepayAdapter
   function repayWithCollateral(
     RepayParams memory repayParams,
-    FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) external nonReentrant {
     // Refresh the debt amount to repay
@@ -78,7 +77,7 @@ abstract contract ParaSwapRepayAdapter is
     );
 
     // Non-zero amount if wanting to flashloan, otherwise 0
-    if (flashParams.flashLoanAmount == 0) {
+    if (repayParams.flashLoanAmount == 0) {
       uint256 collateralBalanceBefore = IERC20(repayParams.collateralAsset).balanceOf(
         address(this)
       );
@@ -95,7 +94,7 @@ abstract contract ParaSwapRepayAdapter is
       }
     } else {
       // flashloan of the current collateral asset to use for repayment
-      _flash(repayParams, flashParams, collateralATokenPermit);
+      _flash(repayParams, collateralATokenPermit);
     }
   }
 
@@ -216,19 +215,17 @@ abstract contract ParaSwapRepayAdapter is
   /**
    * @dev Triggers the flashloan passing encoded params for the repay with collateral
    * @param repayParams struct describing the repay swap
-   * @param flashParams struct describing flashloan params
    * @param collateralATokenPermit optional permit for old collateral's aToken
    */
   function _flash(
     RepayParams memory repayParams,
-    FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) internal virtual {
     bytes memory params = abi.encode(repayParams, collateralATokenPermit);
     address[] memory assets = new address[](1);
-    assets[0] = flashParams.flashLoanAsset;
+    assets[0] = repayParams.collateralAsset;
     uint256[] memory amounts = new uint256[](1);
-    amounts[0] = flashParams.flashLoanAmount;
+    amounts[0] = repayParams.flashLoanAmount;
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
@@ -279,9 +276,6 @@ abstract contract ParaSwapRepayAdapter is
     uint256 currentDebt = IERC20(debtToken).balanceOf(user);
 
     if (buyAllBalanceOffset != 0) {
-      // Sanity check to ensure the passed value `debtRepayAmount` is higher than the current debt
-      // when repaying all debt.
-      require(currentDebt <= debtRepayAmount, 'INSUFFICIENT_AMOUNT_TO_REPAY');
       debtRepayAmount = currentDebt;
     } else {
       // Sanity check to ensure the passed value `debtRepayAmount` is less than the current debt

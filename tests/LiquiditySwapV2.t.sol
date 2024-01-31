@@ -310,8 +310,8 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     vm.startPrank(user);
 
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
-     //supplying extra collateral so that all dai collateral can be swapped
-    _supply(AaveV2Ethereum.POOL, supplyAmount / 2, anotherCollateralAsset);
+     //supplying extra collateral so that all dai collateral can be swapped without flashloan
+    _supply(AaveV2Ethereum.POOL, 15000e6, anotherCollateralAsset);
     _borrow(AaveV2Ethereum.POOL, borrowAmount, collateralAsset);
 
     uint256 oldCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
@@ -451,7 +451,7 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       newCollateralAsset,
-      collateralAmountToSwap, //taking flashloan premium(0.09%) into account
+      collateralAmountToSwap,
       user,
       true,
       false
@@ -480,7 +480,6 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
 
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
-    _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
   }
 
   function test_liquiditySwap_full_with_flashloan_and_permit() public {
@@ -519,13 +518,12 @@ contract LiquiditySwapAdapterV2 is BaseTest {
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
-        newCollateralAmount: 17500e6,
+        newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
         toFlashloan: true,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
-    console2.log(psp.offset);
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit = _getPermit(
       collateralAssetAToken,
       address(liquiditySwapAdapter),

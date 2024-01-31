@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
-import {Errors} from 'aave-address-book/AaveV2.sol';
 import {AaveV2Ethereum, AaveV2EthereumAssets, ILendingPool} from 'aave-address-book/AaveV2Ethereum.sol';
 import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapWithdrawSwapAdapterV2} from '../src/contracts/ParaSwapWithdrawSwapAdapterV2.sol';
@@ -193,11 +192,6 @@ contract WithdrawSwapV2Test is BaseTest {
 
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(user);
     uint256 newAssetBalanceAfter = IERC20Detailed(newAsset).balanceOf(user);
-    assertEq(
-      _withinRange(collateralAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceBefore + 1),
-      true,
-      'INVALID_ATOKEN_AMOUNT_AFTER_WITHDRAW_SWAP'
-    );
     assertEq(collateralAssetATokenBalanceAfter, 0, 'NON_ZERO_ATOKEN_BALANCE_AFTER_WITHDRAW_SWAP');
     assertGt(newAssetBalanceAfter - newAssetBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
     _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);

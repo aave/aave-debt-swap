@@ -301,6 +301,97 @@ contract RepayAdapterV2 is BaseTest {
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
   }
 
+  function test_revert_with_invalid_flashloan_input() public {
+    uint256 supplyAmount = 12_000 ether;
+    uint256 borrowAmount = 9_000 ether;
+
+    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
+    address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
+    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
+
+    vm.startPrank(user);
+    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV2Ethereum.POOL, borrowAmount, debtAsset);
+
+    skip(1 hours);
+
+    uint256 debtRepayAmount = 9100 ether;
+    uint256 maxCollateralAmountToSwap = 9500 ether;
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      debtAsset,
+      debtRepayAmount,
+      user,
+      false,
+      true
+    );
+
+    IERC20Detailed(collateralAssetAToken).approve(address(repayAdapter), maxCollateralAmountToSwap);
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxCollateralAmountToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: debtRepayAmount,
+      debtRepayMode: 2,
+      offset: psp.offset,
+      flashLoanAmount: psp.srcAmount - 1, // not passing enough amount for flashloan
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
+    IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
+
+    vm.expectRevert();
+    repayAdapter.repayWithCollateral(repayParams, collateralATokenPermit);
+
+  }
+
+  function test_revert_wrong_paraswap_route() public {
+    uint256 supplyAmount = 12_000 ether;
+    uint256 borrowAmount = 9_000 ether;
+
+    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
+    address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
+    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
+
+    vm.startPrank(user);
+    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV2Ethereum.POOL, borrowAmount, debtAsset);
+
+    skip(1 hours);
+
+    uint256 debtRepayAmount = 9100 ether;
+    uint256 maxCollateralAmountToSwap = 9500 ether;
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      debtAsset,
+      debtRepayAmount / 2, // route generated for wrong amount
+      user,
+      false,
+      true
+    );
+
+    IERC20Detailed(collateralAssetAToken).approve(address(repayAdapter), maxCollateralAmountToSwap);
+    IParaSwapRepayAdapter.RepayParams memory repayParams = IParaSwapRepayAdapter.RepayParams({
+      collateralAsset: collateralAsset,
+      maxCollateralAmountToSwap: maxCollateralAmountToSwap,
+      debtRepayAsset: debtAsset,
+      debtRepayAmount: debtRepayAmount, // debtRepayAmount will be more than route generated
+      debtRepayMode: 2,
+      offset: psp.offset,
+      flashLoanAmount: psp.srcAmount,
+      user: user,
+      paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+    });
+    IParaSwapRepayAdapter.PermitInput memory collateralATokenPermit;
+
+    vm.expectRevert();
+    repayAdapter.repayWithCollateral(repayParams, collateralATokenPermit);
+
+  }
+
+
   function test_repay_full_with_flashloan_with_permit() public {
     uint256 supplyAmount = 12_000 ether;
     uint256 borrowAmount = 9_000 ether;

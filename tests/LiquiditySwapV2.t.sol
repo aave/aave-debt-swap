@@ -114,6 +114,55 @@ contract LiquiditySwapAdapterV2 is BaseTest {
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
   }
 
+  function test_revert_wrong_paraswap_route() public {
+    uint256 supplyAmount = 12_000 ether;
+    uint256 borrowAmount = 9_000 ether;
+
+    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
+    address newCollateralAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
+
+    vm.startPrank(user);
+    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV2Ethereum.POOL, borrowAmount, collateralAsset);
+
+    skip(1 hours);
+
+   uint256 collateralAmountToSwap = 250 ether;
+    uint256 expectedAmount = 220 ether;
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newCollateralAsset,
+      collateralAmountToSwap / 2,
+      user,
+      true,
+      false
+    );
+
+    IERC20Detailed(collateralAssetAToken).approve(
+      address(liquiditySwapAdapter),
+      collateralAmountToSwap
+    );
+
+    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
+        collateralAsset: collateralAsset,
+        collateralAmountToSwap: collateralAmountToSwap,
+        newCollateralAsset: newCollateralAsset,
+        newCollateralAmount: expectedAmount,
+        offset: psp.offset,
+        user: user,
+        toFlashloan: false,
+        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+      });
+
+    IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
+
+    vm.expectRevert(bytes('WRONG_BALANCE_AFTER_SWAP'));
+    liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
+
+  }
+
   function test_liquiditySwap_without_extra_collateral() public {
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;

@@ -186,8 +186,8 @@ contract RepayAdapterV2 is BaseTest {
   }
 
   function test_repay_full_without_flashLoan() public {
-    uint256 daiSupplyAmount = 12000 ether;
-    uint256 lusdBorrowAmount = 1000 ether;
+    uint256 supplyAmount = 12000 ether;
+    uint256 borrowAmount = 1000 ether;
 
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
@@ -196,13 +196,13 @@ contract RepayAdapterV2 is BaseTest {
 
     vm.startPrank(user);
 
-    _supply(AaveV2Ethereum.POOL, daiSupplyAmount, collateralAsset);
-    _borrow(AaveV2Ethereum.POOL, lusdBorrowAmount, debtAsset);
+    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV2Ethereum.POOL, borrowAmount, debtAsset);
     
     skip(1 hours);
 
     uint256 maxCollateralAssetToSwap = 1050 ether;
-    uint256 debtRepayAmount = lusdBorrowAmount;
+    uint256 debtRepayAmount = borrowAmount;
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       debtAsset,
@@ -245,8 +245,8 @@ contract RepayAdapterV2 is BaseTest {
   }
 
   function test_repay_full_with_flashloan() public {
-    uint256 daiSupplyAmount = 12_000 ether;
-    uint256 lusdBorrowAmount = 9_000 ether;
+    uint256 supplyAmount = 12_000 ether;
+    uint256 borrowAmount = 9_000 ether;
 
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
@@ -254,8 +254,8 @@ contract RepayAdapterV2 is BaseTest {
     address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
-    _supply(AaveV2Ethereum.POOL, daiSupplyAmount, collateralAsset);
-    _borrow(AaveV2Ethereum.POOL, lusdBorrowAmount, debtAsset);
+    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV2Ethereum.POOL, borrowAmount, debtAsset);
 
     skip(1 hours);
 
@@ -302,8 +302,8 @@ contract RepayAdapterV2 is BaseTest {
   }
 
   function test_repay_full_with_flashloan_with_permit() public {
-    uint256 daiSupplyAmount = 12_000 ether;
-    uint256 lusdBorrowAmount = 9_000 ether;
+    uint256 supplyAmount = 12_000 ether;
+    uint256 borrowAmount = 9_000 ether;
 
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
@@ -311,8 +311,8 @@ contract RepayAdapterV2 is BaseTest {
     address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
-    _supply(AaveV2Ethereum.POOL, daiSupplyAmount, collateralAsset);
-    _borrow(AaveV2Ethereum.POOL, lusdBorrowAmount, debtAsset);
+    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV2Ethereum.POOL, borrowAmount, debtAsset);
 
     skip(1 hours);
 

@@ -13,13 +13,14 @@ import {AaveV3Avalanche} from 'aave-address-book/AaveV3Avalanche.sol';
 import {AaveV3Optimism} from 'aave-address-book/AaveV3Optimism.sol';
 import {AaveV3Arbitrum} from 'aave-address-book/AaveV3Arbitrum.sol';
 import {AaveV3Base} from 'aave-address-book/AaveV3Base.sol';
-import {ParaSwapRepayAdapterV2} from '../src/contracts/ParaSwapRepayAdapterV2.sol';
-import {ParaSwapRepayAdapterV3} from '../src/contracts/ParaSwapRepayAdapterV3.sol';
-import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
+import {ParaSwapDebtSwapAdapterV3} from 'src/contracts/ParaSwapDebtSwapAdapterV3.sol';
+import {ParaSwapDebtSwapAdapterV3GHO} from 'src/contracts/ParaSwapDebtSwapAdapterV3GHO.sol';
+import {ParaSwapDebtSwapAdapterV2} from 'src/contracts/ParaSwapDebtSwapAdapterV2.sol';
+import {AugustusRegistry} from 'src/lib/AugustusRegistry.sol';
 
 contract EthereumV2 is EthereumScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV2(
+    new ParaSwapDebtSwapAdapterV2(
       IPoolAddressesProvider(address(AaveV2Ethereum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV2Ethereum.POOL),
       AugustusRegistry.ETHEREUM,
@@ -30,7 +31,7 @@ contract EthereumV2 is EthereumScript {
 
 contract EthereumV3 is EthereumScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV3(
+    new ParaSwapDebtSwapAdapterV3GHO(
       IPoolAddressesProvider(address(AaveV3Ethereum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Ethereum.POOL),
       AugustusRegistry.ETHEREUM,
@@ -41,7 +42,7 @@ contract EthereumV3 is EthereumScript {
 
 contract PolygonV2 is PolygonScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV2(
+    new ParaSwapDebtSwapAdapterV2(
       IPoolAddressesProvider(address(AaveV2Polygon.POOL_ADDRESSES_PROVIDER)),
       address(AaveV2Polygon.POOL),
       AugustusRegistry.POLYGON,
@@ -52,7 +53,7 @@ contract PolygonV2 is PolygonScript {
 
 contract PolygonV3 is PolygonScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV3(
+    new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Polygon.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Polygon.POOL),
       AugustusRegistry.POLYGON,
@@ -63,7 +64,7 @@ contract PolygonV3 is PolygonScript {
 
 contract AvalancheV2 is AvalancheScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV2(
+    new ParaSwapDebtSwapAdapterV2(
       IPoolAddressesProvider(address(AaveV2Avalanche.POOL_ADDRESSES_PROVIDER)),
       address(AaveV2Avalanche.POOL),
       AugustusRegistry.AVALANCHE,
@@ -74,7 +75,7 @@ contract AvalancheV2 is AvalancheScript {
 
 contract AvalancheV3 is AvalancheScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV3(
+    new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Avalanche.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Avalanche.POOL),
       AugustusRegistry.AVALANCHE,
@@ -85,7 +86,7 @@ contract AvalancheV3 is AvalancheScript {
 
 contract ArbitrumV3 is ArbitrumScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV3(
+    new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Arbitrum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Arbitrum.POOL),
       AugustusRegistry.ARBITRUM,
@@ -96,7 +97,7 @@ contract ArbitrumV3 is ArbitrumScript {
 
 contract OptimismV3 is OptimismScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV3(
+    new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Optimism.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Optimism.POOL),
       AugustusRegistry.OPTIMISM,
@@ -107,7 +108,7 @@ contract OptimismV3 is OptimismScript {
 
 contract BaseV3 is BaseScript {
   function run() external broadcast {
-    new ParaSwapRepayAdapterV3(
+    new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Base.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Base.POOL),
       AugustusRegistry.BASE,

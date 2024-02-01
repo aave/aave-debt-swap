@@ -15,7 +15,7 @@ import {stdMath} from 'forge-std/StdMath.sol';
 contract RepayAdapterV2 is BaseTest {
   ParaSwapRepayAdapterV2 internal repayAdapter;
 
-  event ConsoleLog(uint256,uint256);
+  event ConsoleLog(uint256, uint256);
 
   function setUp() public override {
     super.setUp();
@@ -115,7 +115,13 @@ contract RepayAdapterV2 is BaseTest {
       user
     );
     assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
-    assertTrue(_withinRange(collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter, maxCollateralAmountToSwap, 300 ether));
+    assertTrue(
+      _withinRange(
+        collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
+        maxCollateralAmountToSwap,
+        300 ether
+      )
+    );
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
   }
@@ -180,7 +186,13 @@ contract RepayAdapterV2 is BaseTest {
       user
     );
     assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
-    assertTrue(_withinRange(collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter, maxCollateralAmountToSwap, 300 ether));
+    assertTrue(
+      _withinRange(
+        collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
+        maxCollateralAmountToSwap,
+        300 ether
+      )
+    );
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
   }
@@ -198,7 +210,7 @@ contract RepayAdapterV2 is BaseTest {
 
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
     _borrow(AaveV2Ethereum.POOL, borrowAmount, debtAsset);
-    
+
     skip(1 hours);
 
     uint256 maxCollateralAssetToSwap = 1050 ether;
@@ -238,8 +250,10 @@ contract RepayAdapterV2 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(debtTokenBalanceAfter == 0, "FULL_DEBT_NOT_REPAID");
-    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 5 ether));
+    assertTrue(debtTokenBalanceAfter == 0, 'FULL_DEBT_NOT_REPAID');
+    assertTrue(
+      _withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 5 ether)
+    );
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
   }
@@ -295,7 +309,9 @@ contract RepayAdapterV2 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 100 ether));
+    assertTrue(
+      _withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 100 ether)
+    );
     assertTrue(debtTokenBalanceAfter == 0);
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
@@ -343,7 +359,6 @@ contract RepayAdapterV2 is BaseTest {
 
     vm.expectRevert();
     repayAdapter.repayWithCollateral(repayParams, collateralATokenPermit);
-
   }
 
   function test_revert_wrong_paraswap_route() public {
@@ -388,9 +403,7 @@ contract RepayAdapterV2 is BaseTest {
 
     vm.expectRevert();
     repayAdapter.repayWithCollateral(repayParams, collateralATokenPermit);
-
   }
-
 
   function test_repay_full_with_flashloan_with_permit() public {
     uint256 supplyAmount = 12_000 ether;
@@ -446,7 +459,9 @@ contract RepayAdapterV2 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 100 ether));
+    assertTrue(
+      _withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 100 ether)
+    );
     assertTrue(debtTokenBalanceAfter == 0);
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);

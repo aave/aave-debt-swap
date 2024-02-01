@@ -69,7 +69,9 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     // Offset in August calldata if wanting to swap all balance, otherwise 0
     if (liquiditySwapParams.offset != 0) {
       (, , address aToken) = _getReserveData(liquiditySwapParams.collateralAsset);
-      liquiditySwapParams.collateralAmountToSwap = IERC20(aToken).balanceOf(liquiditySwapParams.user);
+      liquiditySwapParams.collateralAmountToSwap = IERC20(aToken).balanceOf(
+        liquiditySwapParams.user
+      );
     }
 
     if (!liquiditySwapParams.toFlashloan) {

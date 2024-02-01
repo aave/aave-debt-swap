@@ -133,7 +133,7 @@ contract LiquiditySwapAdapterV3 is BaseTest {
 
     skip(1 hours);
 
-   uint256 collateralAmountToSwap = 250 ether;
+    uint256 collateralAmountToSwap = 250 ether;
     uint256 expectedAmount = 220 ether;
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
@@ -165,9 +165,7 @@ contract LiquiditySwapAdapterV3 is BaseTest {
 
     vm.expectRevert(bytes('WRONG_BALANCE_AFTER_SWAP'));
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
-
   }
-
 
   function test_liquiditySwap_without_extra_collateral() public {
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
@@ -226,7 +224,11 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     );
     uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken)
       .balanceOf(user);
-    assertGt(newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
+    assertGt(
+      newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
+      expectedAmount,
+      'INVALID_AMOUNT_RECEIVED'
+    );
     assertTrue(
       _withinRange(
         oldCollateralAssetATokenBalanceBefore - oldCollateralAssetATokenBalanceAfter,
@@ -238,7 +240,7 @@ contract LiquiditySwapAdapterV3 is BaseTest {
   }
 
   function test_liquiditySwap_permit_without_extra_collateral() public {
-     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
     address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
@@ -293,7 +295,11 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     );
     uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken)
       .balanceOf(user);
-    assertGt(newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
+    assertGt(
+      newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
+      expectedAmount,
+      'INVALID_AMOUNT_RECEIVED'
+    );
     assertTrue(
       _withinRange(
         oldCollateralAssetATokenBalanceBefore - oldCollateralAssetATokenBalanceAfter,
@@ -349,7 +355,6 @@ contract LiquiditySwapAdapterV3 is BaseTest {
 
     vm.expectRevert();
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
-
   }
 
   function test_liquiditySwapFull_without_extra_collateral() public {
@@ -365,16 +370,15 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     vm.startPrank(user);
 
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
-     //supplying extra collateral so that all dai collateral can be swapped without flashloan
+    //supplying extra collateral so that all dai collateral can be swapped without flashloan
     _supply(AaveV3Ethereum.POOL, 15000e6, anotherCollateralAsset);
     _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
 
     uint256 oldCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken).balanceOf(
-      user
-    );
+    uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken)
+      .balanceOf(user);
 
     uint256 collateralAmountToSwap = 15_000 ether; // equals to supplyAmount
     uint256 expectedAmount = 14_800 ether;
@@ -411,12 +415,15 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     uint256 oldCollateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken).balanceOf(
-      user
-    );
+    uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken)
+      .balanceOf(user);
     assertEq(oldCollateralAssetATokenBalanceAfter, 0);
     _invariant(address(liquiditySwapAdapter), newCollateralAsset, collateralAsset);
-    assertGt(newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
+    assertGt(
+      newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
+      expectedAmount,
+      'INVALID_AMOUNT_RECEIVED'
+    );
   }
 
   function test_liquiditySwap_half_with_flashloan() public {
@@ -435,9 +442,8 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     uint256 oldCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken).balanceOf(
-      user
-    );
+    uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken)
+      .balanceOf(user);
 
     uint256 collateralAmountToSwap = 10_000 ether;
     uint256 expectedAmount = 9600e6;
@@ -455,8 +461,8 @@ contract LiquiditySwapAdapterV3 is BaseTest {
       collateralAmountToSwap
     );
 
-    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter
-      .LiquiditySwapParams({
+    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
@@ -470,20 +476,23 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
 
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
-      uint256 oldCollateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
-        user
-      );
-       uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken).balanceOf(
+    uint256 oldCollateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-      assertTrue(
-        _withinRange(
-          oldCollateralAssetATokenBalanceBefore - oldCollateralAssetATokenBalanceAfter,
-          collateralAmountToSwap,
-          2
-        )
-      );
-    assertGt(newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
+    uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken)
+      .balanceOf(user);
+    assertTrue(
+      _withinRange(
+        oldCollateralAssetATokenBalanceBefore - oldCollateralAssetATokenBalanceAfter,
+        collateralAmountToSwap,
+        2
+      )
+    );
+    assertGt(
+      newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
+      expectedAmount,
+      'INVALID_AMOUNT_RECEIVED'
+    );
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
     _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
   }
@@ -517,8 +526,8 @@ contract LiquiditySwapAdapterV3 is BaseTest {
       collateralAmountToSwap
     );
 
-    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter
-      .LiquiditySwapParams({
+    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
@@ -537,7 +546,7 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
   }
 
-   function test_liquiditySwap_full_with_flashloan_and_permit() public {
+  function test_liquiditySwap_full_with_flashloan_and_permit() public {
     uint256 supplyAmount = 30_000 ether;
     uint256 borrowAmount = 20_000 ether;
 
@@ -553,9 +562,8 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     uint256 oldCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken).balanceOf(
-      user
-    );
+    uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken)
+      .balanceOf(user);
 
     uint256 collateralAmountToSwap = 30_000 ether; // supplyAmount
     uint256 expectedAmount = 29_000e6;
@@ -568,8 +576,8 @@ contract LiquiditySwapAdapterV3 is BaseTest {
       true
     );
 
-    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter
-      .LiquiditySwapParams({
+    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
         collateralAsset: collateralAsset,
         collateralAmountToSwap: collateralAmountToSwap,
         newCollateralAsset: newCollateralAsset,
@@ -586,14 +594,17 @@ contract LiquiditySwapAdapterV3 is BaseTest {
     );
 
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
-      uint256 oldCollateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
-        user
-      );
-       uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken).balanceOf(
+    uint256 oldCollateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-      assertEq(oldCollateralAssetATokenBalanceAfter, 0, 'FULL_SWAP_FAILED');
-    assertGt(newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
+    uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken)
+      .balanceOf(user);
+    assertEq(oldCollateralAssetATokenBalanceAfter, 0, 'FULL_SWAP_FAILED');
+    assertGt(
+      newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
+      expectedAmount,
+      'INVALID_AMOUNT_RECEIVED'
+    );
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
     _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
   }

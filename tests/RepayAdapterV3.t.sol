@@ -28,9 +28,7 @@ contract RepayAdapterV3 is BaseTest {
       AaveGovernanceV2.SHORT_EXECUTOR
     );
     vm.startPrank(AaveV3Ethereum.ACL_ADMIN);
-    IACLManager(address(AaveV3Ethereum.ACL_MANAGER)).addFlashBorrower(
-      address(repayAdapter)
-    );
+    IACLManager(address(AaveV3Ethereum.ACL_MANAGER)).addFlashBorrower(address(repayAdapter));
     vm.stopPrank();
   }
 
@@ -119,7 +117,13 @@ contract RepayAdapterV3 is BaseTest {
       user
     );
     assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
-    assertTrue(_withinRange(collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter, maxCollateralAmountToSwap, 100 ether));
+    assertTrue(
+      _withinRange(
+        collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
+        maxCollateralAmountToSwap,
+        100 ether
+      )
+    );
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
   }
@@ -184,7 +188,13 @@ contract RepayAdapterV3 is BaseTest {
       user
     );
     assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 2));
-    assertTrue(_withinRange(collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter, maxCollateralAmountToSwap, 50 ether));
+    assertTrue(
+      _withinRange(
+        collateralAssetATokenBalanceBefore - collateralAssetATokenBalanceAfter,
+        maxCollateralAmountToSwap,
+        50 ether
+      )
+    );
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
   }
@@ -202,7 +212,7 @@ contract RepayAdapterV3 is BaseTest {
 
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
     _borrow(AaveV3Ethereum.POOL, borrowAmount, debtAsset);
-    
+
     skip(1 hours);
 
     uint256 maxCollateralAssetToSwap = 10_500 ether;
@@ -242,12 +252,14 @@ contract RepayAdapterV3 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(debtTokenBalanceAfter == 0, "FULL_DEBT_NOT_REPAID");
-    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 5 ether));
+    assertTrue(debtTokenBalanceAfter == 0, 'FULL_DEBT_NOT_REPAID');
+    assertTrue(
+      _withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 5 ether)
+    );
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
   }
-  
+
   function test_repay_full_with_flashLoan() public {
     uint256 supplyAmount = 22_000 ether;
     uint256 borrowAmount = 10_000 ether;
@@ -261,7 +273,7 @@ contract RepayAdapterV3 is BaseTest {
 
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
     _borrow(AaveV3Ethereum.POOL, borrowAmount, debtAsset);
-    
+
     skip(1 hours);
 
     uint256 maxCollateralAssetToSwap = 10_500 ether;
@@ -301,13 +313,15 @@ contract RepayAdapterV3 is BaseTest {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(debtTokenBalanceAfter == 0, "FULL_DEBT_NOT_REPAID");
-    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 5 ether));
+    assertTrue(debtTokenBalanceAfter == 0, 'FULL_DEBT_NOT_REPAID');
+    assertTrue(
+      _withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 5 ether)
+    );
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);
   }
 
-   function test_revert_with_invalid_flashloan_input() public {
+  function test_revert_with_invalid_flashloan_input() public {
     uint256 supplyAmount = 12_000 ether;
     uint256 borrowAmount = 9_000 ether;
 
@@ -349,7 +363,6 @@ contract RepayAdapterV3 is BaseTest {
 
     vm.expectRevert();
     repayAdapter.repayWithCollateral(repayParams, collateralATokenPermit);
-
   }
 
   function test_revert_wrong_paraswap_route() public {
@@ -394,11 +407,9 @@ contract RepayAdapterV3 is BaseTest {
 
     vm.expectRevert();
     repayAdapter.repayWithCollateral(repayParams, collateralATokenPermit);
-
   }
 
-
-function test_repay_full_with_flashloan_with_permit() public {
+  function test_repay_full_with_flashloan_with_permit() public {
     uint256 supplyAmount = 12_000 ether;
     uint256 borrowAmount = 9_000 ether;
 
@@ -452,7 +463,9 @@ function test_repay_full_with_flashloan_with_permit() public {
     uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
       user
     );
-    assertTrue(_withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 100 ether));
+    assertTrue(
+      _withinRange(debtTokenBalanceBefore - debtTokenBalanceAfter, debtRepayAmount, 100 ether)
+    );
     assertTrue(debtTokenBalanceAfter == 0);
     assertGt(collateralAssetATokenBalanceBefore, collateralAssetATokenBalanceAfter);
     _invariant(address(repayAdapter), collateralAsset, debtAsset);

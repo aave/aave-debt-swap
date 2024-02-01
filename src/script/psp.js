@@ -64,7 +64,7 @@ function augustusFromAmountOffsetFromCalldata(calldata) {
     case "0x58f15100": // directCurveV2Swap
       return 68; // 4 + 2 * 32
     case "0xa6886da9": // directUniV3Swap
-      return 68; // 4 + 2 * 32
+      return 4 + 4*32; // 4 + 2 * 32
     default:
       throw new Error("Unrecognized function selector for Augustus");
   }

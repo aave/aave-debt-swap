@@ -38,12 +38,19 @@ contract WithdrawSwapV2Test is BaseTest {
 
     vm.startPrank(user);
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
-    
+
     skip(1 hours);
-    
+
     IERC20Detailed(daiAToken).approve(address(withdrawSwapAdapter), withdrawAmount);
 
-    PsPResponse memory psp = _fetchPSPRoute(collateralAsset, newAsset, withdrawAmount, user, true, false);
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      withdrawAmount,
+      user,
+      true,
+      false
+    );
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
       memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
         oldAsset: collateralAsset,
@@ -74,7 +81,14 @@ contract WithdrawSwapV2Test is BaseTest {
 
     uint256 swapAmount = 5_000 ether; // supplyAmount/2
     uint256 expectedAmount = 4500 ether;
-    PsPResponse memory psp = _fetchPSPRoute(collateralAsset, newAsset, swapAmount, user, true, false);
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      swapAmount,
+      user,
+      true,
+      false
+    );
     IERC20Detailed(collateralAssetAToken).approve(address(withdrawSwapAdapter), swapAmount);
 
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
@@ -89,19 +103,31 @@ contract WithdrawSwapV2Test is BaseTest {
       });
     IBaseParaSwapAdapter.PermitInput memory tokenPermit;
 
-    uint256 collateratAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(user);
+    uint256 collateratAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
     uint256 newAssetBalanceBefore = IERC20Detailed(newAsset).balanceOf(user);
 
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, tokenPermit);
 
-    uint256 collateratAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(user);
+    uint256 collateratAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
     uint256 newAssetBalanceAfter = IERC20Detailed(newAsset).balanceOf(user);
     assertEq(
-      _withinRange(collateratAssetATokenBalanceAfter, collateratAssetATokenBalanceBefore, swapAmount + 1),
+      _withinRange(
+        collateratAssetATokenBalanceAfter,
+        collateratAssetATokenBalanceBefore,
+        swapAmount + 1
+      ),
       true,
       'INVALID_ATOKEN_AMOUNT_AFTER_WITHDRAW_SWAP'
     );
-    assertGt(newAssetBalanceAfter - newAssetBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
+    assertGt(
+      newAssetBalanceAfter - newAssetBalanceBefore,
+      expectedAmount,
+      'INVALID_AMOUNT_RECEIVED'
+    );
     _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }
 
@@ -118,7 +144,14 @@ contract WithdrawSwapV2Test is BaseTest {
 
     uint256 swapAmount = 5_000 ether; // supplyAmount/2
     uint256 expectedAmount = 4500 ether;
-    PsPResponse memory psp = _fetchPSPRoute(collateralAsset, newAsset, swapAmount, user, true, false);
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      swapAmount,
+      user,
+      true,
+      false
+    );
 
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
       memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
@@ -137,20 +170,32 @@ contract WithdrawSwapV2Test is BaseTest {
       swapAmount
     );
 
-    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(user);
+    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
     uint256 newAssetBalanceBefore = IERC20Detailed(newAsset).balanceOf(user);
 
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, tokenPermit);
 
-    uint256 collateratAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(user);
-    uint256 newAssetBalanceAfter =  IERC20Detailed(newAsset).balanceOf(user);
+    uint256 collateratAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
+    uint256 newAssetBalanceAfter = IERC20Detailed(newAsset).balanceOf(user);
 
     assertEq(
-      _withinRange(collateratAssetATokenBalanceAfter, collateralAssetATokenBalanceBefore, swapAmount + 1),
+      _withinRange(
+        collateratAssetATokenBalanceAfter,
+        collateralAssetATokenBalanceBefore,
+        swapAmount + 1
+      ),
       true,
       'INVALID_ATOKEN_AMOUNT_AFTER_WITHDRAW_SWAP'
     );
-    assertGt(newAssetBalanceAfter - newAssetBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
+    assertGt(
+      newAssetBalanceAfter - newAssetBalanceBefore,
+      expectedAmount,
+      'INVALID_AMOUNT_RECEIVED'
+    );
     _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }
 
@@ -164,12 +209,19 @@ contract WithdrawSwapV2Test is BaseTest {
     uint256 supplyAmount = 10_000 ether;
 
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
-    
+
     skip(1 hours);
 
     uint256 swapAmount = 10_000 ether;
     uint256 expectedAmount = 9500 ether;
-    PsPResponse memory psp = _fetchPSPRoute(collateralAsset, newAsset, swapAmount, user, true, true);
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      swapAmount,
+      user,
+      true,
+      true
+    );
 
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
       memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
@@ -183,17 +235,28 @@ contract WithdrawSwapV2Test is BaseTest {
       });
     IBaseParaSwapAdapter.PermitInput memory tokenPermit;
 
-    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(user);
+    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
     uint256 newAssetBalanceBefore = IERC20Detailed(newAsset).balanceOf(user);
 
-    IERC20Detailed(collateralAssetAToken).approve(address(withdrawSwapAdapter), collateralAssetATokenBalanceBefore);
+    IERC20Detailed(collateralAssetAToken).approve(
+      address(withdrawSwapAdapter),
+      collateralAssetATokenBalanceBefore
+    );
 
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, tokenPermit);
 
-    uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(user);
+    uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
     uint256 newAssetBalanceAfter = IERC20Detailed(newAsset).balanceOf(user);
     assertEq(collateralAssetATokenBalanceAfter, 0, 'NON_ZERO_ATOKEN_BALANCE_AFTER_WITHDRAW_SWAP');
-    assertGt(newAssetBalanceAfter - newAssetBalanceBefore, expectedAmount, 'INVALID_AMOUNT_RECEIVED');
+    assertGt(
+      newAssetBalanceAfter - newAssetBalanceBefore,
+      expectedAmount,
+      'INVALID_AMOUNT_RECEIVED'
+    );
     _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }
 

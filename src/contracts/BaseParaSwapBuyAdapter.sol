@@ -38,8 +38,7 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
 
   /**
    * @dev Swaps a token for another using ParaSwap (exact out)
-   * @dev ParaSwap does not impose the swap output is exact, meaning that the amount bought can be
-   * higher than the designated amount to buy
+   * @dev In case the swap output is higher than the designated amount to buy, the excess remains in the contract
    * @param toAmountOffset Offset of toAmount in Augustus calldata if it should be overwritten, otherwise 0
    * @param paraswapData Data for Paraswap Adapter
    * @param assetToSwapFrom The address of the asset to swap from

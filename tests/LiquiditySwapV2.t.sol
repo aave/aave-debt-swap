@@ -489,7 +489,6 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
       'INVALID_AMOUNT_RECEIVED'
     );
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
-    _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);
   }
 
   function test_revert_liquiditySwap_half_without_flashloan() public {

@@ -14,7 +14,7 @@ import {IParaSwapRepayAdapter} from '../src/interfaces/IParaSwapRepayAdapter.sol
 import {stdMath} from 'forge-std/StdMath.sol';
 import 'forge-std/Test.sol';
 
-contract RepayAdapterV3 is BaseTest {
+contract RepayAdapterV3Test is BaseTest {
   ParaSwapRepayAdapterV3 internal repayAdapter;
 
   function setUp() public override {

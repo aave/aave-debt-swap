@@ -12,7 +12,7 @@ import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
 import {IParaSwapRepayAdapter} from '../src/interfaces/IParaSwapRepayAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 
-contract RepayAdapterV2 is BaseTest {
+contract RepayAdapterV2Test is BaseTest {
   ParaSwapRepayAdapterV2 internal repayAdapter;
 
   event ConsoleLog(uint256, uint256);

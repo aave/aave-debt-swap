@@ -13,7 +13,7 @@ import {IParaSwapLiquiditySwapAdapter} from '../src/interfaces/IParaSwapLiquidit
 import {stdMath} from 'forge-std/StdMath.sol';
 import 'forge-std/Test.sol';
 
-contract LiquiditySwapAdapterV2 is BaseTest {
+contract LiquiditySwapAdapterV2Test is BaseTest {
   ParaSwapLiquiditySwapAdapterV2 internal liquiditySwapAdapter;
 
   function setUp() public override {

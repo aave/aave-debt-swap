@@ -12,7 +12,7 @@ import {IParaSwapWithdrawSwapAdapter} from '../src/interfaces/IParaSwapWithdrawS
 import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 
-contract WithdrawSwapV2Test is BaseTest {
+contract WithdrawSwapAdapterV2Test is BaseTest {
   ParaSwapWithdrawSwapAdapterV2 internal withdrawSwapAdapter;
 
   function setUp() public override {
@@ -65,6 +65,47 @@ contract WithdrawSwapV2Test is BaseTest {
     IBaseParaSwapAdapter.PermitInput memory collateralATokenPermit;
 
     vm.expectRevert(bytes('minAmountToReceive exceeds max slippage'));
+    withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, collateralATokenPermit);
+  }
+
+  function test_revert_wrong_paraswap_route() public {
+    address daiAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
+    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
+    address newAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
+
+    uint256 supplyAmount = 120 ether;
+    uint256 withdrawAmount = 120 ether;
+    uint256 expectedAmount = 100 ether;
+
+    vm.startPrank(user);
+    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
+
+    skip(1 hours);
+
+    IERC20Detailed(daiAToken).approve(address(withdrawSwapAdapter), withdrawAmount);
+
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      withdrawAmount / 2,
+      user,
+      true,
+      false
+    );
+    IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
+      memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
+        oldAsset: collateralAsset,
+        oldAssetAmount: withdrawAmount,
+        newAsset: newAsset,
+        minAmountToReceive: expectedAmount,
+        allBalanceOffset: psp.offset,
+        user: user,
+        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+      });
+
+    IBaseParaSwapAdapter.PermitInput memory collateralATokenPermit;
+
+    vm.expectRevert();
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, collateralATokenPermit);
   }
 

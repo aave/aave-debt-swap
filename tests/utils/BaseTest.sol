@@ -40,7 +40,7 @@ contract BaseTest is Test {
   ) internal returns (PsPResponse memory) {
     string[] memory inputs = new string[](13);
     inputs[0] = 'node';
-    inputs[1] = './scripts/psp.js';
+    inputs[1] = 'src/script/psp.js';
     inputs[2] = vm.toString(block.chainid);
     inputs[3] = vm.toString(from);
     inputs[4] = vm.toString(to);

@@ -13,7 +13,7 @@ import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
 import {IParaSwapLiquiditySwapAdapter} from '../src/interfaces/IParaSwapLiquiditySwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 
-contract LiquiditySwapAdapterV3 is BaseTest {
+contract LiquiditySwapAdapterV3Test is BaseTest {
   ParaSwapLiquiditySwapAdapterV3 internal liquiditySwapAdapter;
 
   function setUp() public override {

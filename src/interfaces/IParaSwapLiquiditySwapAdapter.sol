@@ -18,7 +18,7 @@ interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
     uint256 newCollateralAmount; // the minimum amount of new collateral asset to receive
     uint256 offset; // offset in sell calldata in case of swapping all collateral, otherwise 0
     address user; // the address of user
-    bool toFlashloan; // true if flashloan is needed to swap collateral, otherwise false
+    bool withFlashLoan; // true if flashloan is needed to swap collateral, otherwise false
     bytes paraswapData; // encoded paraswap data
   }
 
@@ -29,7 +29,6 @@ interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
    */
   function swapLiquidity(
     LiquiditySwapParams memory liquiditySwapParams,
-    // FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) external;
 }

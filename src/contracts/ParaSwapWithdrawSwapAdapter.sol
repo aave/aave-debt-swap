@@ -48,7 +48,9 @@ abstract contract ParaSwapWithdrawSwapAdapter is
 
     // Offset in August calldata if wanting to swap all balance, otherwise 0
     if (withdrawSwapParams.allBalanceOffset != 0) {
-      withdrawSwapParams.oldAssetAmount = IERC20(aToken).balanceOf(withdrawSwapParams.user);
+      uint256 balance = IERC20(aToken).balanceOf(withdrawSwapParams.user);
+      require(balance <= withdrawSwapParams.oldAssetAmount, 'INSUFFICIENT_AMOUNT_TO_SWAP');
+      withdrawSwapParams.oldAssetAmount = balance;
     }
 
     // pulls liquidity asset from the user and withdraw

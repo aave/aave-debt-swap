@@ -83,7 +83,7 @@ contract WithdrawSwapAdapterV3Test is BaseTest {
     skip(1 hours);
 
     IERC20Detailed(daiAToken).approve(address(withdrawSwapAdapter), withdrawAmount);
-
+    // generating the paraswap route for half of withdrawAmount and executing swap with withdrawAmount
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       newAsset,
@@ -106,6 +106,46 @@ contract WithdrawSwapAdapterV3Test is BaseTest {
     IBaseParaSwapAdapter.PermitInput memory collateralATokenPermit;
 
     vm.expectRevert();
+    withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, collateralATokenPermit);
+  }
+
+  function test_revert_withdrawSwap_max_collateral() public {
+    address aToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+    address newAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+
+    uint256 supplyAmount = 120 ether;
+    uint256 withdrawAmount = 120 ether;
+    uint256 expectedAmount = 115 ether;
+
+    vm.startPrank(user);
+
+    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
+
+    skip(1 hours);
+
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      withdrawAmount,
+      user,
+      true,
+      true
+    );
+    IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
+      memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
+        oldAsset: collateralAsset,
+        oldAssetAmount: withdrawAmount,
+        newAsset: newAsset,
+        minAmountToReceive: expectedAmount,
+        allBalanceOffset: psp.offset,
+        user: user,
+        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+      });
+
+    IBaseParaSwapAdapter.PermitInput memory collateralATokenPermit;
+
+    vm.expectRevert(bytes('INSUFFICIENT_AMOUNT_TO_SWAP'));
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, collateralATokenPermit);
   }
 
@@ -169,7 +209,7 @@ contract WithdrawSwapAdapterV3Test is BaseTest {
     assertGt(
       newAssetBalanceAfter - newAssetBalanceBefore,
       expectedAmount,
-      'INVALID_AMOUNT_RECEIVED'
+      'invalid amount received'
     );
     _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }
@@ -237,7 +277,7 @@ contract WithdrawSwapAdapterV3Test is BaseTest {
     assertGt(
       newAssetBalanceAfter - newAssetBalanceBefore,
       expectedAmount,
-      'INVALID_AMOUNT_RECEIVED'
+      'invalid amount received'
     );
     _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }
@@ -255,7 +295,7 @@ contract WithdrawSwapAdapterV3Test is BaseTest {
 
     skip(1 hours);
 
-    uint256 swapAmount = 1000 ether;
+    uint256 swapAmount = 1001 ether;
     uint256 expectedAmount = 950 ether;
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
@@ -297,7 +337,7 @@ contract WithdrawSwapAdapterV3Test is BaseTest {
     assertGt(
       newAssetBalanceAfter - newAssetBalanceBefore,
       expectedAmount,
-      'INVALID_AMOUNT_RECEIVED'
+      'invalid amount received'
     );
     _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }

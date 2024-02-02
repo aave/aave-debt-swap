@@ -69,12 +69,13 @@ abstract contract ParaSwapLiquiditySwapAdapter is
     // Offset in August calldata if wanting to swap all balance, otherwise 0
     if (liquiditySwapParams.offset != 0) {
       (, , address aToken) = _getReserveData(liquiditySwapParams.collateralAsset);
-      liquiditySwapParams.collateralAmountToSwap = IERC20(aToken).balanceOf(
-        liquiditySwapParams.user
-      );
+      uint256 balance = IERC20(aToken).balanceOf(liquiditySwapParams.user);
+      require(balance <= liquiditySwapParams.collateralAmountToSwap, 'INSUFFICIENT_AMOUNT_TO_SWAP');
+      liquiditySwapParams.collateralAmountToSwap = balance;
     }
 
-    if (!liquiditySwapParams.toFlashloan) {
+    // true if flashloan is needed to swap liquidity
+    if (!liquiditySwapParams.withFlashLoan) {
       _swapAndDeposit(liquiditySwapParams, collateralATokenPermit);
     } else {
       // flashloan of the current collateral asset

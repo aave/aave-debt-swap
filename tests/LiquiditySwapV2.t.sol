@@ -104,13 +104,61 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: false,
+        withFlashLoan: false,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
 
     vm.expectRevert(bytes(Errors.VL_TRANSFER_NOT_ALLOWED));
+    liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
+  }
+
+  function test_revert_due_to_insufficient_amount() public {
+    uint256 supplyAmount = 12_000 ether;
+    uint256 borrowAmount = 1_000 ether;
+
+    address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
+    address newCollateralAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
+
+    vm.startPrank(user);
+    _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
+    _borrow(AaveV2Ethereum.POOL, borrowAmount, collateralAsset);
+
+    skip(1 hours);
+
+    uint256 collateralAmountToSwap = 11_999 ether;
+    uint256 expectedAmount = 11_800 ether;
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newCollateralAsset,
+      collateralAmountToSwap,
+      user,
+      true,
+      true
+    );
+
+    IERC20Detailed(collateralAssetAToken).approve(
+      address(liquiditySwapAdapter),
+      collateralAmountToSwap
+    );
+
+    IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
+      memory liquiditySwapParams = IParaSwapLiquiditySwapAdapter.LiquiditySwapParams({
+        collateralAsset: collateralAsset,
+        collateralAmountToSwap: collateralAmountToSwap,
+        newCollateralAsset: newCollateralAsset,
+        newCollateralAmount: expectedAmount,
+        offset: psp.offset,
+        user: user,
+        withFlashLoan: false,
+        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+      });
+
+    IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit;
+
+    vm.expectRevert(bytes('INSUFFICIENT_AMOUNT_TO_SWAP'));
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);
   }
 
@@ -130,10 +178,11 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
 
     uint256 collateralAmountToSwap = 250 ether;
     uint256 expectedAmount = 220 ether;
+    // generating the paraswap route for half of collateralAmountToSwap and executing swap with collateralAmountToSwap
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       newCollateralAsset,
-      collateralAmountToSwap / 2,
+      collateralAmountToSwap / 2, 
       user,
       true,
       false
@@ -152,7 +201,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: false,
+        withFlashLoan: false,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -206,7 +255,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: false,
+        withFlashLoan: false,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -223,7 +272,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     assertGt(
       newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
       expectedAmount,
-      'INVALID_AMOUNT_RECEIVED'
+      'invalid amount received'
     );
     assertTrue(
       _withinRange(
@@ -273,7 +322,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: false,
+        withFlashLoan: false,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -301,7 +350,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     assertGt(
       newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
       expectedAmount,
-      'INVALID_AMOUNT_RECEIVED'
+      'invalid amount received'
     );
   }
 
@@ -338,7 +387,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: false,
+        withFlashLoan: false,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -399,7 +448,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: false,
+        withFlashLoan: false,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -417,7 +466,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     assertGt(
       newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
       expectedAmount,
-      'INVALID_AMOUNT_RECEIVED'
+      'invalid amount received'
     );
   }
 
@@ -464,7 +513,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: true,
+        withFlashLoan: true,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -486,7 +535,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     assertGt(
       newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
       expectedAmount,
-      'INVALID_AMOUNT_RECEIVED'
+      'invalid amount received'
     );
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
   }
@@ -528,7 +577,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: false,
+        withFlashLoan: false,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
@@ -578,7 +627,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
         newCollateralAmount: expectedAmount,
         offset: psp.offset,
         user: user,
-        toFlashloan: true,
+        withFlashLoan: true,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit = _getPermit(
@@ -593,11 +642,11 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     );
     uint256 newCollateralAssetATokenBalanceAfter = IERC20Detailed(newCollateralAssetAToken)
       .balanceOf(user);
-    assertEq(oldCollateralAssetATokenBalanceAfter, 0, 'FULL_SWAP_FAILED');
+    assertEq(oldCollateralAssetATokenBalanceAfter, 0, 'swap with all collateral failed');
     assertGt(
       newCollateralAssetATokenBalanceAfter - newCollateralAssetATokenBalanceBefore,
       expectedAmount,
-      'INVALID_AMOUNT_RECEIVED'
+      'invalid amount received'
     );
     _invariant(address(liquiditySwapAdapter), collateralAsset, newCollateralAsset);
     _invariant(address(liquiditySwapAdapter), collateralAssetAToken, newCollateralAssetAToken);

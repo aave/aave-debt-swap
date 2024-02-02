@@ -76,8 +76,8 @@ abstract contract ParaSwapRepayAdapter is
       repayParams.user
     );
 
-    // Non-zero amount if wanting to flashloan, otherwise 0
-    if (repayParams.flashLoanAmount == 0) {
+    // true if flashloan is needed to repay the debt
+    if (!repayParams.withFlashLoan) {
       uint256 collateralBalanceBefore = IERC20(repayParams.collateralAsset).balanceOf(
         address(this)
       );
@@ -225,7 +225,7 @@ abstract contract ParaSwapRepayAdapter is
     address[] memory assets = new address[](1);
     assets[0] = repayParams.collateralAsset;
     uint256[] memory amounts = new uint256[](1);
-    amounts[0] = repayParams.flashLoanAmount;
+    amounts[0] = repayParams.maxCollateralAmountToSwap;
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 
@@ -276,6 +276,9 @@ abstract contract ParaSwapRepayAdapter is
     uint256 currentDebt = IERC20(debtToken).balanceOf(user);
 
     if (buyAllBalanceOffset != 0) {
+      // Sanity check to ensure the passed value `debtRepayAmount` is higher than the current debt
+      // when repaying all debt.
+      require(currentDebt <= debtRepayAmount, 'INSUFFICIENT_AMOUNT_TO_REPAY');
       debtRepayAmount = currentDebt;
     } else {
       // Sanity check to ensure the passed value `debtRepayAmount` is less than the current debt

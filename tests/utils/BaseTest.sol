@@ -40,7 +40,7 @@ contract BaseTest is Test {
   ) internal returns (PsPResponse memory) {
     string[] memory inputs = new string[](13);
     inputs[0] = 'node';
-    inputs[1] = 'src/script/psp.js';
+    inputs[1] = 'tests/scripts/psp.js';
     inputs[2] = vm.toString(block.chainid);
     inputs[3] = vm.toString(from);
     inputs[4] = vm.toString(to);
@@ -53,6 +53,34 @@ contract BaseTest is Test {
     inputs[11] = vm.toString(IERC20Detailed(to).decimals());
     inputs[12] = vm.toString(block.number);
 
+    bytes memory res = vm.ffi(inputs);
+    return abi.decode(res, (PsPResponse));
+  }
+
+  function _fetchPSPRouteWithoutPspCacheUpdate(
+    address from,
+    address to,
+    uint256 amount,
+    address userAddress,
+    bool sell,
+    bool max
+      ) internal returns (PsPResponse memory) {
+    string[] memory inputs = new string[](14);
+    inputs[0] = 'node';
+    inputs[1] = 'tests/scripts/psp.js';
+    inputs[2] = vm.toString(block.chainid);
+    inputs[3] = vm.toString(from);
+    inputs[4] = vm.toString(to);
+    inputs[5] = vm.toString(amount);
+    inputs[6] = vm.toString(userAddress);
+    inputs[7] = sell ? 'SELL' : 'BUY';
+    inputs[8] = vm.toString(MAX_SLIPPAGE);
+    inputs[9] = vm.toString(max);
+    inputs[10] = vm.toString(IERC20Detailed(from).decimals());
+    inputs[11] = vm.toString(IERC20Detailed(to).decimals());
+    inputs[12] = vm.toString(block.number);
+    inputs[13] = 'false';
+    
     bytes memory res = vm.ffi(inputs);
     return abi.decode(res, (PsPResponse));
   }

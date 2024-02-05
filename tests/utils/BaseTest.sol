@@ -64,7 +64,7 @@ contract BaseTest is Test {
     address userAddress,
     bool sell,
     bool max
-      ) internal returns (PsPResponse memory) {
+  ) internal returns (PsPResponse memory) {
     string[] memory inputs = new string[](14);
     inputs[0] = 'node';
     inputs[1] = 'tests/scripts/psp.js';
@@ -80,7 +80,7 @@ contract BaseTest is Test {
     inputs[11] = vm.toString(IERC20Detailed(to).decimals());
     inputs[12] = vm.toString(block.number);
     inputs[13] = 'false';
-    
+
     bytes memory res = vm.ffi(inputs);
     return abi.decode(res, (PsPResponse));
   }

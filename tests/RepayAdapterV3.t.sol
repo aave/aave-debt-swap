@@ -399,7 +399,7 @@ contract RepayAdapterV3Test is BaseTest {
       debtRepayAmount: debtRepayAmount,
       debtRepayMode: 2,
       offset: psp.offset,
-      withFlashLoan: true, 
+      withFlashLoan: true,
       user: user,
       paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
     });

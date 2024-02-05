@@ -182,7 +182,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       newCollateralAsset,
-      collateralAmountToSwap / 2, 
+      collateralAmountToSwap / 2,
       user,
       true,
       false

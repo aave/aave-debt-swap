@@ -10,7 +10,6 @@ import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
  * @author Aave Labs
  **/
 interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
-
   struct LiquiditySwapParams {
     address collateralAsset; // the asset to swap collateral from
     uint256 collateralAmountToSwap; // the amount of asset to swap from

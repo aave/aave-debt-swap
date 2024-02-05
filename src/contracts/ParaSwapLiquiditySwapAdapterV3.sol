@@ -28,7 +28,7 @@ contract ParaSwapLiquiditySwapAdapterV3 is ParaSwapLiquiditySwapAdapter {
     IParaSwapAugustusRegistry augustusRegistry,
     address owner
   ) ParaSwapLiquiditySwapAdapter(addressesProvider, pool, augustusRegistry, owner) {
-      // Intentionally left blank
+    // Intentionally left blank
   }
 
   /// @inheritdoc BaseParaSwapAdapter

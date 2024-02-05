@@ -10,7 +10,6 @@ import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
  * @author Aave Labs
  **/
 interface IParaSwapRepayAdapter is IBaseParaSwapAdapter {
-
   struct RepayParams {
     address collateralAsset; // the asset you want to swap collateral from
     uint256 maxCollateralAmountToSwap; // the max amount you want to swap from

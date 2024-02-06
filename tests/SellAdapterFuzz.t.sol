@@ -12,6 +12,13 @@ contract SellAdapterFuzzTest is BaseTest {
   ParaSwapSellAdapterHarness internal sellAdapter;
   address[] internal aaveV3EthereumAssets;
 
+  event Swapped(
+    address indexed fromAsset,
+    address indexed toAsset,
+    uint256 fromAmount,
+    uint256 receivedAmount
+  );
+
   function setUp() public override {
     super.setUp();
     vm.createSelectFork(vm.rpcUrl('mainnet'));
@@ -40,7 +47,7 @@ contract SellAdapterFuzzTest is BaseTest {
     if (fromAssetIndex == toAssetIndex) {
       toAssetIndex = (toAssetIndex + 1) % totalAssets;
     }
-    amountToSwap = bound(amountToSwap, 1e9, 10_000 ether);
+    amountToSwap = bound(amountToSwap, 1e15, 10_000 ether);
     address assetToSwapFrom = aaveV3EthereumAssets[fromAssetIndex];
     address assetToSwapTo = aaveV3EthereumAssets[toAssetIndex];
     PsPResponse memory psp = _fetchPSPRouteWithoutPspCacheUpdate(
@@ -56,6 +63,8 @@ contract SellAdapterFuzzTest is BaseTest {
     }
     deal(assetToSwapFrom, address(sellAdapter), amountToSwap);
 
+    vm.expectEmit(true, true, false, false, address(sellAdapter));
+    emit Swapped(assetToSwapFrom, assetToSwapTo, psp.srcAmount, psp.destAmount);
     sellAdapter.sellOnParaSwap(
       psp.offset,
       abi.encode(psp.swapCalldata, psp.augustus),

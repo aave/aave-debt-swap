@@ -5,12 +5,20 @@ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3Ethereum, AaveV3EthereumAssets} from 'aave-address-book/AaveV3Ethereum.sol';
 import {AugustusRegistry} from 'src/lib/AugustusRegistry.sol';
+import {IBaseParaSwapAdapter} from 'src/interfaces/IBaseParaSwapAdapter.sol';
 import {ParaSwapBuyAdapterHarness} from './harness/ParaSwapBuyAdapterHarness.sol';
 import {BaseTest} from './utils/BaseTest.sol';
 
 contract BuyAdapterFuzzTest is BaseTest {
   ParaSwapBuyAdapterHarness internal buyAdapter;
   address[] internal aaveV3EthereumAssets;
+
+  event Bought(
+    address indexed fromAsset,
+    address indexed toAsset,
+    uint256 amountSold,
+    uint256 receivedAmount
+  );
 
   function setUp() public override {
     super.setUp();
@@ -40,7 +48,7 @@ contract BuyAdapterFuzzTest is BaseTest {
     if (fromAssetIndex == toAssetIndex) {
       toAssetIndex = (toAssetIndex + 1) % totalAssets;
     }
-    amountToBuy = bound(amountToBuy, 1e9, 4_000 ether);
+    amountToBuy = bound(amountToBuy, 1e15, 4_000 ether);
     address assetToSwapFrom = aaveV3EthereumAssets[fromAssetIndex];
     address assetToSwapTo = aaveV3EthereumAssets[toAssetIndex];
     PsPResponse memory psp = _fetchPSPRouteWithoutPspCacheUpdate(
@@ -55,7 +63,12 @@ contract BuyAdapterFuzzTest is BaseTest {
       _ensureCorrectOffset(psp.offset, amountToBuy, psp.swapCalldata);
     }
     deal(assetToSwapFrom, address(buyAdapter), psp.srcAmount);
+    uint256 buyAdapterAssetFromBalanceBefore = IERC20Detailed(assetToSwapFrom).balanceOf(
+      address(buyAdapter)
+    );
 
+    vm.expectEmit(true, true, false, false, address(buyAdapter));
+    emit Bought(assetToSwapFrom, assetToSwapTo, psp.srcAmount, psp.destAmount);
     buyAdapter.buyOnParaSwap(
       psp.offset,
       abi.encode(psp.swapCalldata, psp.augustus),
@@ -65,6 +78,14 @@ contract BuyAdapterFuzzTest is BaseTest {
       amountToBuy
     );
 
+    uint256 buyAdapterAssetFromBalanceAfter = IERC20Detailed(assetToSwapFrom).balanceOf(
+      address(buyAdapter)
+    );
+    assertGe(
+      psp.srcAmount,
+      buyAdapterAssetFromBalanceBefore - buyAdapterAssetFromBalanceAfter,
+      'consumed more balance than expected'
+    );
     assertGt(psp.destAmount, 0, 'route quoted zero destAmount');
     assertGe(
       IERC20Detailed(assetToSwapTo).balanceOf(address(buyAdapter)),

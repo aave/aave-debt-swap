@@ -437,7 +437,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
 
     IERC20Detailed(collateralAssetAToken).approve(
       address(liquiditySwapAdapter),
-      oldCollateralAssetATokenBalanceBefore
+      collateralAmountToSwap
     );
 
     IParaSwapLiquiditySwapAdapter.LiquiditySwapParams
@@ -633,7 +633,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     IParaSwapLiquiditySwapAdapter.PermitInput memory collateralATokenPermit = _getPermit(
       collateralAssetAToken,
       address(liquiditySwapAdapter),
-      oldCollateralAssetATokenBalanceBefore
+      collateralAmountToSwap
     );
 
     liquiditySwapAdapter.swapLiquidity(liquiditySwapParams, collateralATokenPermit);

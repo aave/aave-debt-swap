@@ -442,7 +442,7 @@ contract LiquiditySwapAdapterV3Test is BaseTest {
 
     IERC20Detailed(collateralAssetAToken).approve(
       address(liquiditySwapAdapter),
-      oldCollateralAssetATokenBalanceBefore
+      collateralAmountToSwap
     );
 
     IParaSwapLiquiditySwapAdapter.LiquiditySwapParams

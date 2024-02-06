@@ -40,7 +40,7 @@ contract BaseTest is Test {
   ) internal returns (PsPResponse memory) {
     string[] memory inputs = new string[](13);
     inputs[0] = 'node';
-    inputs[1] = 'tests/scripts/psp.js';
+    inputs[1] = './scripts/psp.js';
     inputs[2] = vm.toString(block.chainid);
     inputs[3] = vm.toString(from);
     inputs[4] = vm.toString(to);
@@ -67,7 +67,7 @@ contract BaseTest is Test {
   ) internal returns (PsPResponse memory) {
     string[] memory inputs = new string[](14);
     inputs[0] = 'node';
-    inputs[1] = 'tests/scripts/psp.js';
+    inputs[1] = './scripts/psp.js';
     inputs[2] = vm.toString(block.chainid);
     inputs[3] = vm.toString(from);
     inputs[4] = vm.toString(to);
@@ -95,6 +95,27 @@ contract BaseTest is Test {
       0,
       'LEFTOVER_NEW_DEBT_ASSET'
     );
+  }
+
+  /**
+   * @dev Ensure offset is correct when swapping full amount
+   */
+  function _ensureCorrectOffset(
+    uint256 offset,
+    uint256 amount,
+    bytes memory swapCalldata
+  ) internal {
+    uint256 amountAtOffset;
+    // Ensure 256 bit (32 bytes) offset value is within bounds of the
+    // calldata, not overlapping with the first 4 bytes (function selector).
+    assertTrue(offset >= 4 && offset <= swapCalldata.length - 32, 'offset out of range');
+    // In memory, swapCalldata consists of a 256 bit length field, followed by
+    // the actual bytes data, that is why 32 is added to the byte offset.
+    assembly {
+      amountAtOffset := mload(add(swapCalldata, add(offset, 32)))
+    }
+
+    assertEq(amountAtOffset, amount, 'wrong offset');
   }
 
   function _getPermit(

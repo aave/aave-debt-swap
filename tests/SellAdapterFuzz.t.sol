@@ -5,18 +5,18 @@ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3Ethereum, AaveV3EthereumAssets} from 'aave-address-book/AaveV3Ethereum.sol';
 import {AugustusRegistry} from 'src/lib/AugustusRegistry.sol';
-import {MockParaSwapSellAdapter} from './mocks/MockParaSwapSellAdapter.sol';
+import {ParaSwapSellAdapterHarness} from './harness/ParaSwapSellAdapterHarness.sol';
 import {BaseTest} from './utils/BaseTest.sol';
 
 contract SellAdapterFuzzTest is BaseTest {
-  MockParaSwapSellAdapter internal sellAdapter;
+  ParaSwapSellAdapterHarness internal sellAdapter;
   address[] internal aaveV3EthereumAssets;
 
   function setUp() public override {
     super.setUp();
     vm.createSelectFork(vm.rpcUrl('mainnet'));
 
-    sellAdapter = new MockParaSwapSellAdapter(
+    sellAdapter = new ParaSwapSellAdapterHarness(
       IPoolAddressesProvider(address(AaveV3Ethereum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Ethereum.POOL),
       AugustusRegistry.ETHEREUM
@@ -40,7 +40,7 @@ contract SellAdapterFuzzTest is BaseTest {
     if (fromAssetIndex == toAssetIndex) {
       toAssetIndex = (toAssetIndex + 1) % totalAssets;
     }
-    amountToSwap = bound(amountToSwap, 1e9, 1000 ether);
+    amountToSwap = bound(amountToSwap, 1e9, 10_000 ether);
     address assetToSwapFrom = aaveV3EthereumAssets[fromAssetIndex];
     address assetToSwapTo = aaveV3EthereumAssets[toAssetIndex];
     PsPResponse memory psp = _fetchPSPRouteWithoutPspCacheUpdate(
@@ -52,19 +52,7 @@ contract SellAdapterFuzzTest is BaseTest {
       swapAll
     );
     if (swapAll) {
-      uint256 amountAtOffset;
-      bytes memory swapCalldata = psp.swapCalldata;
-      uint256 offset = psp.offset;
-
-      // Ensure 256 bit (32 bytes) toAmountOffset value is within bounds of the
-      // calldata, not overlapping with the first 4 bytes (function selector).
-      assertTrue(offset >= 4 && offset <= swapCalldata.length - 32, 'offset out of range');
-      // In memory, swapCalldata consists of a 256 bit length field, followed by
-      // the actual bytes data, that is why 32 is added to the byte offset.
-      assembly {
-        amountAtOffset := mload(add(swapCalldata, add(offset, 32)))
-      }
-      assertEq(amountAtOffset, amountToSwap, 'wrong offset');
+      _ensureCorrectOffset(psp.offset, amountToSwap, psp.swapCalldata);
     }
     deal(assetToSwapFrom, address(sellAdapter), amountToSwap);
 

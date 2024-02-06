@@ -8,10 +8,10 @@ import {IParaSwapAugustusRegistry} from 'src/interfaces/IParaSwapAugustusRegistr
 import {BaseParaSwapSellAdapter} from 'src/contracts/BaseParaSwapSellAdapter.sol';
 
 /**
- * @title MockParaSwapSellAdapter
- * @notice Mock contract for BaseParaSwapSellAdapter
+ * @title ParaSwapSellAdapterHarness
+ * @notice Harness contract for BaseParaSwapSellAdapter
  */
-contract MockParaSwapSellAdapter is BaseParaSwapSellAdapter {
+contract ParaSwapSellAdapterHarness is BaseParaSwapSellAdapter {
   /**
    * @dev Constructor
    * @param addressesProvider The address of the Aave PoolAddressesProvider contract

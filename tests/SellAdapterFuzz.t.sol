@@ -35,6 +35,7 @@ contract SellAdapterFuzzTest is BaseTest {
     ];
   }
 
+  // limiting fuzz runs due to ParaSwap API rate limit
   /// forge-config: default.fuzz.runs = 50
   function test_fuzz_sell_on_paraswap(
     uint256 fromAssetIndex,

@@ -9,7 +9,8 @@ contract PSRouteFuzzTest is BaseTest {
     super.setUp();
     vm.createSelectFork(vm.rpcUrl('mainnet'), 17706839);
   }
-
+  
+  // limiting fuzz runs due to ParaSwap API rate limit
   /// forge-config: default.fuzz.runs = 50
   function test_fuzz_correct_offset(uint256 amount, bool sell) public {
     amount = bound(amount, 1e9, 1_000_000 ether);

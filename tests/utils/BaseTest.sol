@@ -5,7 +5,7 @@ import 'forge-std/Test.sol';
 import {AaveV3Polygon} from 'aave-address-book/AaveV3Polygon.sol';
 import {DataTypes} from 'aave-address-book/AaveV3.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IParaswapDebtSwapAdapter} from '../../src/interfaces/IParaswapDebtSwapAdapter.sol';
+import {IBaseParaSwapAdapter} from '../../src/interfaces/IBaseParaSwapAdapter.sol';
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
@@ -73,7 +73,7 @@ contract BaseTest is Test {
     address permitToken,
     address debtSwapAdapter,
     uint256 amount
-  ) internal view returns (IParaswapDebtSwapAdapter.PermitInput memory) {
+  ) internal view returns (IBaseParaSwapAdapter.PermitInput memory) {
     IERC20WithPermit token = IERC20WithPermit(permitToken);
     uint256 nonce;
     try IERC20WithPermit(token).nonces(user) returns (uint256 res) {
@@ -95,7 +95,7 @@ contract BaseTest is Test {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
 
     return
-      IParaswapDebtSwapAdapter.PermitInput({
+      IBaseParaSwapAdapter.PermitInput({
         aToken: token,
         value: amount,
         deadline: type(uint256).max,

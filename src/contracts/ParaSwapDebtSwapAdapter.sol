@@ -13,7 +13,7 @@ import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
 import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
 import {ICreditDelegationToken} from '../interfaces/ICreditDelegationToken.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
-import {IParaswapDebtSwapAdapter} from '../interfaces/IParaswapDebtSwapAdapter.sol';
+import {IParaSwapDebtSwapAdapter} from '../interfaces/IParaSwapDebtSwapAdapter.sol';
 
 /**
  * @title ParaSwapDebtSwapAdapter
@@ -24,7 +24,7 @@ abstract contract ParaSwapDebtSwapAdapter is
   BaseParaSwapBuyAdapter,
   ReentrancyGuard,
   IFlashLoanReceiver,
-  IParaswapDebtSwapAdapter
+  IParaSwapDebtSwapAdapter
 {
   using SafeERC20 for IERC20WithPermit;
 

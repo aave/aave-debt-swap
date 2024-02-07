@@ -10,10 +10,10 @@ import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 
 /**
- * @title BaseParaSwapBuyAdapter
- * @notice Implements logic for buying an asset using ParaSwap (exact-out swap)
+ * @title BaseParaSwapSellAdapter
+ * @notice Implements logic for selling an asset using ParaSwap (exact-in swap)
  */
-abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
+abstract contract BaseParaSwapSellAdapter is BaseParaSwapAdapter {
   using SafeERC20 for IERC20Detailed;
   using PercentageMath for uint256;
 
@@ -37,25 +37,25 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
   }
 
   /**
-   * @dev Swaps a token for another using ParaSwap (exact out)
-   * @dev In case the swap output is higher than the designated amount to buy, the excess remains in the contract
-   * @param toAmountOffset Offset of toAmount in Augustus calldata if it should be overwritten, otherwise 0
+   * @dev Swaps a token for another using ParaSwap (exact in)
+   * @dev In case the swap input is less than the designated amount to sell, the excess remains in the contract
+   * @param fromAmountOffset Offset of fromAmount in Augustus calldata if it should be overwritten, otherwise 0
    * @param paraswapData Data for Paraswap Adapter
    * @param assetToSwapFrom The address of the asset to swap from
    * @param assetToSwapTo The address of the asset to swap to
-   * @param maxAmountToSwap The maximum amount of asset to swap from
-   * @param amountToReceive The amount of asset to receive
-   * @return amountSold The amount of asset sold
+   * @param amountToSwap The amount of asset to swap from
+   * @param minAmountToReceive The minimum amount to receive
+   * @return amountReceived The amount of asset bought
    */
-  function _buyOnParaSwap(
-    uint256 toAmountOffset,
+  function _sellOnParaSwap(
+    uint256 fromAmountOffset,
     bytes memory paraswapData,
     IERC20Detailed assetToSwapFrom,
     IERC20Detailed assetToSwapTo,
-    uint256 maxAmountToSwap,
-    uint256 amountToReceive
-  ) internal returns (uint256 amountSold) {
-    (bytes memory buyCalldata, IParaSwapAugustus augustus) = abi.decode(
+    uint256 amountToSwap,
+    uint256 minAmountToReceive
+  ) internal returns (uint256 amountReceived) {
+    (bytes memory swapCalldata, IParaSwapAugustus augustus) = abi.decode(
       paraswapData,
       (bytes, IParaSwapAugustus)
     );
@@ -68,38 +68,42 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
       uint256 fromAssetPrice = _getPrice(address(assetToSwapFrom));
       uint256 toAssetPrice = _getPrice(address(assetToSwapTo));
 
-      uint256 expectedMaxAmountToSwap = ((amountToReceive *
-        (toAssetPrice * (10 ** fromAssetDecimals))) / (fromAssetPrice * (10 ** toAssetDecimals)))
-        .percentMul(PercentageMath.PERCENTAGE_FACTOR + MAX_SLIPPAGE_PERCENT);
+      uint256 expectedMinAmountOut = ((amountToSwap * (fromAssetPrice * (10 ** toAssetDecimals))) /
+        (toAssetPrice * (10 ** fromAssetDecimals))).percentMul(
+          PercentageMath.PERCENTAGE_FACTOR - MAX_SLIPPAGE_PERCENT
+        );
 
-      // Sanity check for `maxAmountToSwap` to ensure it is within slippage bounds
-      require(maxAmountToSwap <= expectedMaxAmountToSwap, 'maxAmountToSwap exceeds max slippage');
+      // Sanity check for `minAmountToReceive` to ensure it is within slippage bounds
+      require(
+        expectedMinAmountOut <= minAmountToReceive,
+        'minAmountToReceive exceeds max slippage'
+      );
     }
 
     uint256 balanceBeforeAssetFrom = assetToSwapFrom.balanceOf(address(this));
-    require(balanceBeforeAssetFrom >= maxAmountToSwap, 'INSUFFICIENT_BALANCE_BEFORE_SWAP');
+    require(balanceBeforeAssetFrom >= amountToSwap, 'INSUFFICIENT_BALANCE_BEFORE_SWAP');
 
     uint256 balanceBeforeAssetTo = assetToSwapTo.balanceOf(address(this));
 
     address tokenTransferProxy = augustus.getTokenTransferProxy();
     assetToSwapFrom.safeApprove(tokenTransferProxy, 0);
-    assetToSwapFrom.safeApprove(tokenTransferProxy, maxAmountToSwap);
+    assetToSwapFrom.safeApprove(tokenTransferProxy, amountToSwap);
 
-    if (toAmountOffset != 0) {
-      // Ensure 256 bit (32 bytes) toAmountOffset value is within bounds of the
+    if (fromAmountOffset != 0) {
+      // Ensure 256 bit (32 bytes) fromAmountOffset value is within bounds of the
       // calldata, not overlapping with the first 4 bytes (function selector).
       require(
-        toAmountOffset >= 4 && toAmountOffset <= buyCalldata.length - 32,
-        'TO_AMOUNT_OFFSET_OUT_OF_RANGE'
+        fromAmountOffset >= 4 && fromAmountOffset <= swapCalldata.length - 32,
+        'FROM_AMOUNT_OFFSET_OUT_OF_RANGE'
       );
-      // Overwrite the toAmount with the correct amount for the buy.
-      // In memory, buyCalldata consists of a 256 bit length field, followed by
+      // Overwrite the fromAmount with the correct amount for the swap.
+      // In memory, swapCalldata consists of a 256 bit length field, followed by
       // the actual bytes data, that is why 32 is added to the byte offset.
       assembly {
-        mstore(add(buyCalldata, add(toAmountOffset, 32)), amountToReceive)
+        mstore(add(swapCalldata, add(fromAmountOffset, 32)), amountToSwap)
       }
     }
-    (bool success, ) = address(augustus).call(buyCalldata);
+    (bool success, ) = address(augustus).call(swapCalldata);
     if (!success) {
       // Copy revert reason from call
       assembly {
@@ -108,15 +112,14 @@ abstract contract BaseParaSwapBuyAdapter is BaseParaSwapAdapter {
       }
     }
 
-    // Amount provided should be less or equal than `maxAmountToSwap`
-    uint256 balanceAfterAssetFrom = assetToSwapFrom.balanceOf(address(this));
-    amountSold = balanceBeforeAssetFrom - balanceAfterAssetFrom;
-    require(amountSold <= maxAmountToSwap, 'WRONG_BALANCE_AFTER_SWAP');
+    // Amount provided should be equal (or even less) than `amountToSwap`
+    uint256 amountSold = balanceBeforeAssetFrom - assetToSwapFrom.balanceOf(address(this));
+    require(amountToSwap <= amountSold, 'WRONG_BALANCE_AFTER_SWAP');
 
-    // Amount received should be equal (or even higher) than `amountToReceive`
-    uint256 amountReceived = assetToSwapTo.balanceOf(address(this)) - balanceBeforeAssetTo;
-    require(amountReceived >= amountToReceive, 'INSUFFICIENT_AMOUNT_RECEIVED');
+    // Amount received should be higher or equal `minAmountToReceive`
+    amountReceived = assetToSwapTo.balanceOf(address(this)) - balanceBeforeAssetTo;
+    require(amountReceived >= minAmountToReceive, 'INSUFFICIENT_AMOUNT_RECEIVED');
 
-    emit Bought(address(assetToSwapFrom), address(assetToSwapTo), amountSold, amountReceived);
+    emit Swapped(address(assetToSwapFrom), address(assetToSwapTo), amountSold, amountReceived);
   }
 }

@@ -8,7 +8,7 @@ import {Errors} from 'aave-address-book/AaveV2.sol';
 import {AaveV2Ethereum, AaveV2EthereumAssets, ILendingPool} from 'aave-address-book/AaveV2Ethereum.sol';
 import {BaseTest} from './utils/BaseTest.sol';
 import {ICreditDelegationToken} from '../src/interfaces/ICreditDelegationToken.sol';
-import {IParaswapDebtSwapAdapter} from '../src/interfaces/IParaswapDebtSwapAdapter.sol';
+import {IParaSwapDebtSwapAdapter} from '../src/interfaces/IParaSwapDebtSwapAdapter.sol';
 import {ParaSwapDebtSwapAdapter} from '../src/contracts/ParaSwapDebtSwapAdapter.sol';
 import {ParaSwapDebtSwapAdapterV2} from '../src/contracts/ParaSwapDebtSwapAdapterV2.sol';
 import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
@@ -99,7 +99,7 @@ contract DebtSwapV2Test is BaseTest {
     ICreditDelegationToken(newDebtToken).approveDelegation(address(debtSwapAdapter), psp.srcAmount);
     IERC20Detailed(aToken).approve(address(debtSwapAdapter), supplyAmount);
 
-    IParaswapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaswapDebtSwapAdapter
+    IParaSwapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaSwapDebtSwapAdapter
       .DebtSwapParams({
         debtAsset: debtAsset,
         debtRepayAmount: type(uint256).max,
@@ -112,8 +112,8 @@ contract DebtSwapV2Test is BaseTest {
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
-    IParaswapDebtSwapAdapter.CreditDelegationInput memory cd;
-    IParaswapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
+    IParaSwapDebtSwapAdapter.CreditDelegationInput memory cd;
+    IParaSwapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
 
     vm.expectRevert(bytes(Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW));
     debtSwapAdapter.swapDebt(debtSwapParams, cd, collateralATokenPermit);
@@ -149,7 +149,7 @@ contract DebtSwapV2Test is BaseTest {
 
     ICreditDelegationToken(newDebtToken).approveDelegation(address(debtSwapAdapter), psp.srcAmount);
 
-    IParaswapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaswapDebtSwapAdapter
+    IParaSwapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaSwapDebtSwapAdapter
       .DebtSwapParams({
         debtAsset: debtAsset,
         debtRepayAmount: repayAmount,
@@ -164,8 +164,8 @@ contract DebtSwapV2Test is BaseTest {
 
     uint256 vDEBT_TOKENBalanceBefore = IERC20Detailed(debtToken).balanceOf(user);
 
-    IParaswapDebtSwapAdapter.CreditDelegationInput memory cd;
-    IParaswapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
+    IParaSwapDebtSwapAdapter.CreditDelegationInput memory cd;
+    IParaSwapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
 
     debtSwapAdapter.swapDebt(debtSwapParams, cd, collateralATokenPermit);
 
@@ -204,7 +204,7 @@ contract DebtSwapV2Test is BaseTest {
 
     ICreditDelegationToken(newDebtToken).approveDelegation(address(debtSwapAdapter), psp.srcAmount);
 
-    IParaswapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaswapDebtSwapAdapter
+    IParaSwapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaSwapDebtSwapAdapter
       .DebtSwapParams({
         debtAsset: debtAsset,
         debtRepayAmount: type(uint256).max,
@@ -217,8 +217,8 @@ contract DebtSwapV2Test is BaseTest {
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
-    IParaswapDebtSwapAdapter.CreditDelegationInput memory cd;
-    IParaswapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
+    IParaSwapDebtSwapAdapter.CreditDelegationInput memory cd;
+    IParaSwapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
 
     debtSwapAdapter.swapDebt(debtSwapParams, cd, collateralATokenPermit);
 
@@ -254,7 +254,7 @@ contract DebtSwapV2Test is BaseTest {
 
     ICreditDelegationToken(newDebtToken).approveDelegation(address(debtSwapAdapter), psp.srcAmount);
 
-    IParaswapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaswapDebtSwapAdapter
+    IParaSwapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaSwapDebtSwapAdapter
       .DebtSwapParams({
         debtAsset: debtAsset,
         debtRepayAmount: type(uint256).max,
@@ -267,8 +267,8 @@ contract DebtSwapV2Test is BaseTest {
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
-    IParaswapDebtSwapAdapter.CreditDelegationInput memory cd;
-    IParaswapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
+    IParaSwapDebtSwapAdapter.CreditDelegationInput memory cd;
+    IParaSwapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
 
     debtSwapAdapter.swapDebt(debtSwapParams, cd, collateralATokenPermit);
 
@@ -326,7 +326,7 @@ contract DebtSwapV2Test is BaseTest {
       extraCollateralAmount + 1
     );
 
-    IParaswapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaswapDebtSwapAdapter
+    IParaSwapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaSwapDebtSwapAdapter
       .DebtSwapParams({
         debtAsset: debtAsset,
         debtRepayAmount: type(uint256).max,
@@ -339,8 +339,8 @@ contract DebtSwapV2Test is BaseTest {
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
-    IParaswapDebtSwapAdapter.CreditDelegationInput memory cd;
-    IParaswapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
+    IParaSwapDebtSwapAdapter.CreditDelegationInput memory cd;
+    IParaSwapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
 
     debtSwapAdapter.swapDebt(debtSwapParams, cd, collateralATokenPermit);
   }
@@ -388,7 +388,7 @@ contract DebtSwapV2Test is BaseTest {
 
     ICreditDelegationToken(newDebtToken).approveDelegation(address(debtSwapAdapter), psp.srcAmount);
 
-    IParaswapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaswapDebtSwapAdapter
+    IParaSwapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaSwapDebtSwapAdapter
       .DebtSwapParams({
         debtAsset: debtAsset,
         debtRepayAmount: type(uint256).max,
@@ -401,8 +401,8 @@ contract DebtSwapV2Test is BaseTest {
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
-    IParaswapDebtSwapAdapter.CreditDelegationInput memory cd;
-    IParaswapDebtSwapAdapter.PermitInput memory collateralATokenPermit = _getPermit(
+    IParaSwapDebtSwapAdapter.CreditDelegationInput memory cd;
+    IParaSwapDebtSwapAdapter.PermitInput memory collateralATokenPermit = _getPermit(
       extraCollateralAToken,
       address(debtSwapAdapter),
       extraCollateralAmount + 1
@@ -459,7 +459,7 @@ contract DebtSwapV2Test is BaseTest {
       extraCollateralAmount + 1
     );
 
-    IParaswapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaswapDebtSwapAdapter
+    IParaSwapDebtSwapAdapter.DebtSwapParams memory debtSwapParams = IParaSwapDebtSwapAdapter
       .DebtSwapParams({
         debtAsset: debtAsset,
         debtRepayAmount: type(uint256).max,
@@ -472,8 +472,8 @@ contract DebtSwapV2Test is BaseTest {
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
-    IParaswapDebtSwapAdapter.CreditDelegationInput memory cd;
-    IParaswapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
+    IParaSwapDebtSwapAdapter.CreditDelegationInput memory cd;
+    IParaSwapDebtSwapAdapter.PermitInput memory collateralATokenPermit;
 
     debtSwapAdapter.swapDebt(debtSwapParams, cd, collateralATokenPermit);
   }

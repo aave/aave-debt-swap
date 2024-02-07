@@ -57,6 +57,34 @@ contract BaseTest is Test {
     return abi.decode(res, (PsPResponse));
   }
 
+  function _fetchPSPRouteWithoutPspCacheUpdate(
+    address from,
+    address to,
+    uint256 amount,
+    address userAddress,
+    bool sell,
+    bool max
+  ) internal returns (PsPResponse memory) {
+    string[] memory inputs = new string[](14);
+    inputs[0] = 'node';
+    inputs[1] = './scripts/psp.js';
+    inputs[2] = vm.toString(block.chainid);
+    inputs[3] = vm.toString(from);
+    inputs[4] = vm.toString(to);
+    inputs[5] = vm.toString(amount);
+    inputs[6] = vm.toString(userAddress);
+    inputs[7] = sell ? 'SELL' : 'BUY';
+    inputs[8] = vm.toString(MAX_SLIPPAGE);
+    inputs[9] = vm.toString(max);
+    inputs[10] = vm.toString(IERC20Detailed(from).decimals());
+    inputs[11] = vm.toString(IERC20Detailed(to).decimals());
+    inputs[12] = vm.toString(block.number);
+    inputs[13] = 'false';
+
+    bytes memory res = vm.ffi(inputs);
+    return abi.decode(res, (PsPResponse));
+  }
+
   /**
    * @dev Ensure balances are 0 on the adapter itself
    */
@@ -67,6 +95,27 @@ contract BaseTest is Test {
       0,
       'LEFTOVER_NEW_DEBT_ASSET'
     );
+  }
+
+  /**
+   * @dev Ensure the amount offset in ParaSwap calldata is correct
+   */
+  function _checkAmountInParaSwapCalldata(
+    uint256 offset,
+    uint256 amount,
+    bytes memory swapCalldata
+  ) internal {
+    uint256 amountAtOffset;
+    // Ensure 256 bit (32 bytes) offset value is within bounds of the
+    // calldata, not overlapping with the first 4 bytes (function selector).
+    assertTrue(offset >= 4 && offset <= swapCalldata.length - 32, 'offset out of range');
+    // In memory, swapCalldata consists of a 256 bit length field, followed by
+    // the actual bytes data, that is why 32 is added to the byte offset.
+    assembly {
+      amountAtOffset := mload(add(swapCalldata, add(offset, 32)))
+    }
+
+    assertEq(amountAtOffset, amount, 'wrong offset');
   }
 
   function _getPermit(

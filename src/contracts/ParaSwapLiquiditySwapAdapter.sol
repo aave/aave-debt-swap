@@ -64,7 +64,6 @@ abstract contract ParaSwapLiquiditySwapAdapter is
   /// @inheritdoc IParaSwapLiquiditySwapAdapter
   function swapLiquidity(
     LiquiditySwapParams memory liquiditySwapParams,
-    FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) external nonReentrant {
     // Offset in August calldata if wanting to swap all balance, otherwise 0
@@ -75,12 +74,12 @@ abstract contract ParaSwapLiquiditySwapAdapter is
       liquiditySwapParams.collateralAmountToSwap = balance;
     }
 
-    // Non-zero amount if wanting to flashloan, otherwise 0
-    if (flashParams.flashLoanAmount == 0) {
+    // true if flashloan is needed to swap liquidity
+    if (!liquiditySwapParams.withFlashLoan) {
       _swapAndDeposit(liquiditySwapParams, collateralATokenPermit);
     } else {
       // flashloan of the current collateral asset
-      _flash(liquiditySwapParams, flashParams, collateralATokenPermit);
+      _flash(liquiditySwapParams, collateralATokenPermit);
     }
   }
 
@@ -208,19 +207,17 @@ abstract contract ParaSwapLiquiditySwapAdapter is
   /**
    * @dev Triggers the flashloan passing encoded params for the collateral swap
    * @param liquiditySwapParams struct describing the liquidity swap
-   * @param flashParams struct describing flashloan params
    * @param collateralATokenPermit optional permit for old collateral's aToken
    */
   function _flash(
     LiquiditySwapParams memory liquiditySwapParams,
-    FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) internal virtual {
     bytes memory params = abi.encode(liquiditySwapParams, collateralATokenPermit);
     address[] memory assets = new address[](1);
-    assets[0] = flashParams.flashLoanAsset;
+    assets[0] = liquiditySwapParams.collateralAsset;
     uint256[] memory amounts = new uint256[](1);
-    amounts[0] = flashParams.flashLoanAmount;
+    amounts[0] = liquiditySwapParams.collateralAmountToSwap;
     uint256[] memory interestRateModes = new uint256[](1);
     interestRateModes[0] = 0;
 

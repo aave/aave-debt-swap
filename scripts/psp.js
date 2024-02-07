@@ -24,6 +24,7 @@ const FROM_DECIMALS = Number(args[8]);
 const TO_DECIMALS = Number(args[9]);
 // param only needed for the hash
 // const BLOCK_NUMBER = Number(args[10]);
+const UPDATE_PSP_CACHE = args[11] !== "false";
 
 // generate a hash for input parameters to cache response and not spam psp sdk
 const hash = objectHash(args);
@@ -60,11 +61,11 @@ function augustusFromAmountOffsetFromCalldata(calldata) {
     case "0x19fc5be0": // directBalancerV2GivenOutSwap
       return 68; // 4 + 2 * 32
     case "0x3865bde6": // directCurveV1Swap
-      return 68; // 4 + 2 * 32
+      return 132; // 4 + 4 * 32
     case "0x58f15100": // directCurveV2Swap
       return 68; // 4 + 2 * 32
     case "0xa6886da9": // directUniV3Swap
-      return 68; // 4 + 2 * 32
+      return 132; // 4 + 4 * 32
     default:
       throw new Error("Unrecognized function selector for Augustus");
   }
@@ -158,8 +159,9 @@ async function main(from, to, method, amount, user) {
     ["(address,bytes,uint256,uint256,uint256)"],
     [[txParams.to, txParams.data, srcAmount, destAmount, offset]]
   );
-
-  fs.writeFileSync(filePath, encodedData);
+  if (UPDATE_PSP_CACHE) {
+    fs.writeFileSync(filePath, encodedData);
+  }
   process.stdout.write(encodedData);
 }
 main(FROM, TO, METHOD, AMOUNT, USER_ADDRESS);

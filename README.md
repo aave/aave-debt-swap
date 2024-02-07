@@ -135,7 +135,7 @@ In situations where a user's real loan-to-value (LTV) is higher than their maxim
 4. Pulls the `1000 aBUSD` from the user and withdraws `1000 BUSD` from the pool. (requires `aToken` approval)
 5. Repays `1000 BUSD` flashloan and `0.9 BUSD` premium.
 
-The `function swapLiquidity(LiquiditySwapParams memory liquiditySwapParams, FlashParams memory flashParams, PermitInput memory collateralATokenPermit)` expects three parameters.
+The `function swapLiquidity(LiquiditySwapParams memory liquiditySwapParams, PermitInput memory collateralATokenPermit)` expects three parameters.
 
 The first one describes the swap:
 
@@ -147,22 +147,13 @@ struct LiquiditySwapParams {
   uint256 newCollateralAmount; // the minimum amount of new collateral asset to receive
   uint256 offset; // offset in sell calldata in case of swapping all collateral, otherwise 0
   address user; // the address of user
+  bool withFlashLoan; // true if flashloan is needed to swap collateral, otherwise false
   bytes paraswapData; // encoded paraswap data
 }
 
 ```
 
-The second one describes the (optional) flashParams:
-
-```solidity
-struct FlashParams {
-  address flashLoanAsset; // the asset to flashloan (collateralAsset)
-  uint256 flashLoanAmount; // the amount to flashloan (collateralAmountToSwap)
-}
-
-```
-
-The third one describes the (optional) collateral aToken permit:
+The second one describes the (optional) collateral aToken permit:
 
 ```solidity
 struct PermitInput {
@@ -209,23 +200,14 @@ struct RepayParams {
   uint256 debtRepayAmount; // the amount of debt to repay
   uint256 debtRepayMode; // debt interest rate mode (1 for stable, 2 for variable)
   uint256 offset; // offset in buy calldata in case of swapping all collateral, otherwise 0
+  bool withFlashLoan; // true if flashloan is needed to repay the debt, otherwise false
   address user; // the address of user
   bytes paraswapData; // encoded paraswap data
 }
 
 ```
 
-The second one describes the (optional) flashParams:
-
-```solidity
-struct FlashParams {
-  address flashLoanAsset; // the asset to flashloan (collateralAsset)
-  uint256 flashLoanAmount; // the amount to flashloan equivalent to the debt to repay
-}
-
-```
-
-The third one describes the (optional) collateral aToken permit:
+The second one describes the (optional) collateral aToken permit:
 
 ```solidity
 struct PermitInput {
@@ -324,7 +306,8 @@ Security considerations around the ParaSwap adapter contracts:
     - When using full balance, the ParaSwap `offset` is set to non-zero value (depends on the action) the `amount` is set to a high value (higher than the current balance of the user) so contracts override the amount with the last updated value of the user position. This could artificially create positive slippage if the amount used for the ParaSwap API call highly differs from the amount that is finally used on the transaction execution (the actual one).
     - Example for `BUY`: API call of `buy(x,y)` and swap transaction of `buy(x',y')`. If `y'>y` then `x'>x`, so positive slippage happens as user is receiving more assets than expected.
     - Example for `SELL`: API call of `sell(x,y)` and swap transaction of `sell(x',y')`. If `x'>x` then `y'>y`, so positive slippage happens as user is receiving more assets than expected.
-
+  - In `ParaSwapLiquditySwapAdapter`, fetching of ParaSwap route for swapping from collateral asset to another asset with flashloan enabled should take `flashloanFee` into consideration. As `ParaSwapLiquditySwapAdapter` swaps `(collateralAmountToSwap - flashloanFee)` to guarantee that `flashloanFee` is paid, generating routes with `(collateralAmountToSwap - flashloanFee) `is recommended.
+    - Example: User wants to swap `1000 BUSD` collateral to `min(995 USDC)` collateral and with flashloan enabled. The ParaSwap route should be generated for selling (1000 BUSD - 0.9 BUSD) to buy USDC assuming (0.09% flashloan fee). Thus, ParaSwapLiquditySwapAdapter will flashloan (1000 BUSD) but will sell (1000 BUSD - 0.9 BUSD) to ensure that 0.9 BUSD stays in the contract to pay flashloan premium.
 
 ## Install
 

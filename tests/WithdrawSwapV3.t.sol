@@ -13,12 +13,12 @@ import {IParaSwapWithdrawSwapAdapter} from '../src/interfaces/IParaSwapWithdrawS
 import {IBaseParaSwapAdapter} from '../src/interfaces/IBaseParaSwapAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 
-contract WithdrawSwapV3Test is BaseTest {
+contract WithdrawSwapAdapterV3Test is BaseTest {
   ParaSwapWithdrawSwapAdapterV3 internal withdrawSwapAdapter;
 
   function setUp() public override {
     super.setUp();
-    vm.createSelectFork(vm.rpcUrl('mainnet'), 18877385);
+    vm.createSelectFork(vm.rpcUrl('mainnet'), 19125717);
 
     withdrawSwapAdapter = new ParaSwapWithdrawSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Ethereum.POOL_ADDRESSES_PROVIDER)),
@@ -28,29 +28,35 @@ contract WithdrawSwapV3Test is BaseTest {
     );
   }
 
-  function test_revert_withdrawSwap_without_collateral() public {
-    address aToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+  function test_revert_due_to_slippage_withdrawSwap() public {
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address otherAsset = AaveV3EthereumAssets.USDC_UNDERLYING;
 
-    uint256 supplyAmount = 120e18;
-    uint256 withdrawAmount = 120e6;
+    uint256 supplyAmount = 120 ether;
+    uint256 withdrawAmount = 120 ether;
+    uint256 expectedAmount = 10 ether;
 
     vm.startPrank(user);
 
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
 
-    skip(1 hours);
+    IERC20Detailed(collateralAssetAToken).approve(address(withdrawSwapAdapter), withdrawAmount);
 
-    PsPResponse memory psp = _fetchPSPRoute(otherAsset, newAsset, withdrawAmount, user, true, true);
-
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      withdrawAmount,
+      user,
+      true,
+      true
+    );
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
       memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
-        oldAsset: otherAsset,
+        oldAsset: collateralAsset,
         oldAssetAmount: withdrawAmount,
         newAsset: newAsset,
-        minAmountToReceive: 0,
+        minAmountToReceive: expectedAmount,
         allBalanceOffset: psp.offset,
         user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
@@ -58,7 +64,48 @@ contract WithdrawSwapV3Test is BaseTest {
 
     IBaseParaSwapAdapter.PermitInput memory collateralATokenPermit;
 
-    vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
+    vm.expectRevert(bytes('minAmountToReceive exceeds max slippage'));
+    withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, collateralATokenPermit);
+  }
+
+  function test_revert_wrong_paraswap_route() public {
+    address daiAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+    address newAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
+
+    uint256 supplyAmount = 120 ether;
+    uint256 withdrawAmount = 120 ether;
+    uint256 expectedAmount = 100 ether;
+
+    vm.startPrank(user);
+    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
+
+    skip(1 hours);
+
+    IERC20Detailed(daiAToken).approve(address(withdrawSwapAdapter), withdrawAmount);
+    // generating the paraswap route for half of withdrawAmount and executing swap with withdrawAmount
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      withdrawAmount / 2,
+      user,
+      true,
+      false
+    );
+    IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
+      memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
+        oldAsset: collateralAsset,
+        oldAssetAmount: withdrawAmount,
+        newAsset: newAsset,
+        minAmountToReceive: expectedAmount,
+        allBalanceOffset: psp.offset,
+        user: user,
+        paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
+      });
+
+    IBaseParaSwapAdapter.PermitInput memory collateralATokenPermit;
+
+    vm.expectRevert();
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, collateralATokenPermit);
   }
 
@@ -66,10 +113,10 @@ contract WithdrawSwapV3Test is BaseTest {
     address aToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address otherAsset = AaveV3EthereumAssets.USDC_UNDERLYING;
 
-    uint256 supplyAmount = 120e18;
-    uint256 withdrawAmount = 120e6;
+    uint256 supplyAmount = 120 ether;
+    uint256 withdrawAmount = 120 ether;
+    uint256 expectedAmount = 115 ether;
 
     vm.startPrank(user);
 
@@ -77,13 +124,20 @@ contract WithdrawSwapV3Test is BaseTest {
 
     skip(1 hours);
 
-    PsPResponse memory psp = _fetchPSPRoute(otherAsset, newAsset, withdrawAmount, user, true, true);
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      withdrawAmount,
+      user,
+      true,
+      true
+    );
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
       memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
         oldAsset: collateralAsset,
-        oldAssetAmount: withdrawAmount / 2,
+        oldAssetAmount: withdrawAmount,
         newAsset: newAsset,
-        minAmountToReceive: 0,
+        minAmountToReceive: expectedAmount,
         allBalanceOffset: psp.offset,
         user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
@@ -97,124 +151,195 @@ contract WithdrawSwapV3Test is BaseTest {
 
   function test_withdrawSwap_swapHalf() public {
     vm.startPrank(user);
-    address oldAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
-    address oldAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
     address newAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
 
     uint256 supplyAmount = 10_000 ether;
 
-    _supply(AaveV3Ethereum.POOL, supplyAmount, oldAsset);
+    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
 
-    uint256 swapAmount = supplyAmount / 2;
-    PsPResponse memory psp = _fetchPSPRoute(oldAsset, newAsset, swapAmount, user, true, false);
-    IERC20Detailed(oldAssetAToken).approve(address(withdrawSwapAdapter), swapAmount);
+    uint256 swapAmount = 5_000 ether; // supplyAmount/2
+    uint256 expectedAmount = 4500 ether;
+
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      swapAmount,
+      user,
+      true,
+      false
+    );
+    IERC20Detailed(collateralAssetAToken).approve(address(withdrawSwapAdapter), swapAmount);
+
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
       memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
-        oldAsset: oldAsset,
+        oldAsset: collateralAsset,
         oldAssetAmount: swapAmount,
         newAsset: newAsset,
-        minAmountToReceive: swapAmount,
+        minAmountToReceive: 4000 ether,
         allBalanceOffset: psp.offset,
         user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
     IBaseParaSwapAdapter.PermitInput memory tokenPermit;
 
-    uint256 oldAsset_ATokenBalanceBefore = IERC20Detailed(oldAssetAToken).balanceOf(user);
+    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
+    uint256 newAssetBalanceBefore = IERC20Detailed(newAsset).balanceOf(user);
 
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, tokenPermit);
 
-    uint256 oldAsset_ATokenBalanceAfter = IERC20Detailed(oldAssetAToken).balanceOf(user);
+    uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
+    uint256 newAssetBalanceAfter = IERC20Detailed(newAsset).balanceOf(user);
+
     assertEq(
-      _withinRange(oldAsset_ATokenBalanceAfter, oldAsset_ATokenBalanceBefore, swapAmount + 1),
+      _withinRange(
+        collateralAssetATokenBalanceAfter,
+        collateralAssetATokenBalanceBefore,
+        swapAmount + 1
+      ),
       true,
       'INVALID_ATOKEN_AMOUNT_AFTER_WITHDRAW_SWAP'
     );
-    _invariant(address(withdrawSwapAdapter), oldAsset, newAsset);
+    assertGt(
+      newAssetBalanceAfter - newAssetBalanceBefore,
+      expectedAmount,
+      'invalid amount received'
+    );
+    _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }
 
   function test_withdrawSwap_swapHalf_with_permit() public {
     vm.startPrank(user);
-    address oldAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
-    address oldAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
     address newAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
 
     uint256 supplyAmount = 10_000 ether;
 
-    _supply(AaveV3Ethereum.POOL, supplyAmount, oldAsset);
+    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
 
-    uint256 swapAmount = supplyAmount / 2;
-    PsPResponse memory psp = _fetchPSPRoute(oldAsset, newAsset, swapAmount, user, true, false);
+    uint256 swapAmount = 5_000 ether; // supplyAmount/2
+    uint256 expectedAmount = 4500 ether;
+
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      swapAmount,
+      user,
+      true,
+      false
+    );
+
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
       memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
-        oldAsset: oldAsset,
+        oldAsset: collateralAsset,
         oldAssetAmount: swapAmount,
         newAsset: newAsset,
-        minAmountToReceive: swapAmount,
+        minAmountToReceive: expectedAmount,
         allBalanceOffset: psp.offset,
         user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
 
     IBaseParaSwapAdapter.PermitInput memory tokenPermit = _getPermit(
-      oldAssetAToken,
+      collateralAssetAToken,
       address(withdrawSwapAdapter),
       swapAmount
     );
 
-    uint256 oldAsset_ATokenBalanceBefore = IERC20Detailed(oldAssetAToken).balanceOf(user);
+    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
+    uint256 newAssetBalanceBefore = IERC20Detailed(newAsset).balanceOf(user);
 
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, tokenPermit);
 
-    uint256 oldAsset_ATokenBalanceAfter = IERC20Detailed(oldAssetAToken).balanceOf(user);
+    uint256 collateralAssetATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
+    uint256 newAssetBalanceAfter = IERC20Detailed(newAsset).balanceOf(user);
     assertEq(
-      _withinRange(oldAsset_ATokenBalanceAfter, oldAsset_ATokenBalanceBefore, swapAmount + 1),
+      _withinRange(
+        collateralAssetATokenBalanceAfter,
+        collateralAssetATokenBalanceBefore,
+        swapAmount + 1
+      ),
       true,
       'INVALID_ATOKEN_AMOUNT_AFTER_WITHDRAW_SWAP'
     );
-    _invariant(address(withdrawSwapAdapter), oldAsset, newAsset);
+    assertGt(
+      newAssetBalanceAfter - newAssetBalanceBefore,
+      expectedAmount,
+      'invalid amount received'
+    );
+    _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }
 
   function test_withdrawSwap_swapFull() public {
     vm.startPrank(user);
-    address oldAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
-    address oldAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
+    address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
+    address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address newAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
     address newAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
 
-    uint256 supplyAmount = 10_000 ether;
+    uint256 supplyAmount = 1000 ether;
 
-    _supply(AaveV3Ethereum.POOL, supplyAmount, oldAsset);
+    _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
 
-    uint256 swapAmount = supplyAmount;
-    PsPResponse memory psp = _fetchPSPRoute(oldAsset, newAsset, swapAmount, user, true, false);
-    IERC20Detailed(oldAssetAToken).approve(address(withdrawSwapAdapter), swapAmount);
+    skip(1 hours);
+
+    uint256 swapAmount = 1001 ether;
+    uint256 expectedAmount = 950 ether;
+    PsPResponse memory psp = _fetchPSPRoute(
+      collateralAsset,
+      newAsset,
+      swapAmount,
+      user,
+      true,
+      true
+    );
+
     IParaSwapWithdrawSwapAdapter.WithdrawSwapParams
       memory withdrawSwapParams = IParaSwapWithdrawSwapAdapter.WithdrawSwapParams({
-        oldAsset: oldAsset,
+        oldAsset: collateralAsset,
         oldAssetAmount: swapAmount,
         newAsset: newAsset,
-        minAmountToReceive: swapAmount,
+        minAmountToReceive: expectedAmount,
         allBalanceOffset: psp.offset,
         user: user,
         paraswapData: abi.encode(psp.swapCalldata, psp.augustus)
       });
+
     IBaseParaSwapAdapter.PermitInput memory tokenPermit;
 
-    uint256 oldAsset_ATokenBalanceBefore = IERC20Detailed(oldAssetAToken).balanceOf(user);
+    uint256 collateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
+      user
+    );
+    uint256 newAssetBalanceBefore = IERC20Detailed(newAsset).balanceOf(user);
+
+    IERC20Detailed(collateralAssetAToken).approve(
+      address(withdrawSwapAdapter),
+      collateralAssetATokenBalanceBefore
+    );
 
     withdrawSwapAdapter.withdrawAndSwap(withdrawSwapParams, tokenPermit);
 
-    uint256 oldAsset_ATokenBalanceAfter = IERC20Detailed(oldAssetAToken).balanceOf(user);
-    assertEq(
-      _withinRange(oldAsset_ATokenBalanceAfter, oldAsset_ATokenBalanceBefore, swapAmount + 1),
-      true,
-      'INVALID_ATOKEN_AMOUNT_AFTER_WITHDRAW_SWAP'
+    uint256 collateralATokenBalanceAfter = IERC20Detailed(collateralAssetAToken).balanceOf(user);
+    uint256 newAssetBalanceAfter = IERC20Detailed(newAsset).balanceOf(user);
+    assertEq(collateralATokenBalanceAfter, 0, 'NON_ZERO_ATOKEN_BALANCE_AFTER_WITHDRAW_SWAP');
+    assertGt(
+      newAssetBalanceAfter - newAssetBalanceBefore,
+      expectedAmount,
+      'invalid amount received'
     );
-    assertEq(oldAsset_ATokenBalanceAfter, 0, 'NON_ZERO_ATOKEN_BALANCE_AFTER_WITHDRAW_SWAP');
-    _invariant(address(withdrawSwapAdapter), oldAsset, newAsset);
+    _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
   }
 
   function _withinRange(uint256 a, uint256 b, uint256 diff) internal returns (bool) {

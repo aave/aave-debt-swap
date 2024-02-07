@@ -16,5 +16,3 @@ node_modules
 # ignore foundry deploy artifacts
 broadcast/
 
-# ignore pspcache from call to paraswap adapters
-tests/pspcache/

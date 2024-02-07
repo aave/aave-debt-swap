@@ -10,11 +10,6 @@ import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
  * @author Aave Labs
  **/
 interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
-  struct FlashParams {
-    address flashLoanAsset; // the asset to flashloan (collateralAsset)
-    uint256 flashLoanAmount; // the amount to flashloan (collateralAmountToSwap)
-  }
-
   struct LiquiditySwapParams {
     address collateralAsset; // the asset to swap collateral from
     uint256 collateralAmountToSwap; // the amount of asset to swap from
@@ -22,18 +17,17 @@ interface IParaSwapLiquiditySwapAdapter is IBaseParaSwapAdapter {
     uint256 newCollateralAmount; // the minimum amount of new collateral asset to receive
     uint256 offset; // offset in sell calldata in case of swapping all collateral, otherwise 0
     address user; // the address of user
+    bool withFlashLoan; // true if flashloan is needed to swap collateral, otherwise false
     bytes paraswapData; // encoded paraswap data
   }
 
   /**
    * @notice Swaps liquidity(collateral) from one asset to another
    * @param liquiditySwapParams struct describing the liquidity swap
-   * @param flashParams optional struct describing flashloan params if needed
    * @param collateralATokenPermit optional permit for collateral aToken
    */
   function swapLiquidity(
     LiquiditySwapParams memory liquiditySwapParams,
-    FlashParams memory flashParams,
     PermitInput memory collateralATokenPermit
   ) external;
 }

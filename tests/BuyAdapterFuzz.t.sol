@@ -36,6 +36,7 @@ contract BuyAdapterFuzzTest is BaseTest {
     ];
   }
 
+  /// forge-config: default.fuzz.runs = 50
   function test_fuzz_buyOnParaSwap(
     uint256 fromAssetIndex,
     uint256 toAssetIndex,

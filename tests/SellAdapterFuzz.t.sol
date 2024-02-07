@@ -59,7 +59,7 @@ contract SellAdapterFuzzTest is BaseTest {
       swapAll
     );
     if (swapAll) {
-      _ensureCorrectOffset(psp.offset, amountToSwap, psp.swapCalldata);
+      _checkAmountInParaSwapCalldata(psp.offset, amountToSwap, psp.swapCalldata);
     }
     deal(assetToSwapFrom, address(sellAdapter), amountToSwap);
 

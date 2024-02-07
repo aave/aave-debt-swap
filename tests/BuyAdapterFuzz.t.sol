@@ -60,7 +60,7 @@ contract BuyAdapterFuzzTest is BaseTest {
       swapAll
     );
     if (swapAll) {
-      _ensureCorrectOffset(psp.offset, amountToBuy, psp.swapCalldata);
+      _checkAmountInParaSwapCalldata(psp.offset, amountToBuy, psp.swapCalldata);
     }
     deal(assetToSwapFrom, address(buyAdapter), psp.srcAmount);
     uint256 buyAdapterAssetFromBalanceBefore = IERC20Detailed(assetToSwapFrom).balanceOf(

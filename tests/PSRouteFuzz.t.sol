@@ -23,6 +23,6 @@ contract PSRouteFuzzTest is BaseTest {
       sell,
       true
     );
-    _ensureCorrectOffset(psp.offset, amount, psp.swapCalldata);
+    _checkAmountInParaSwapCalldata(psp.offset, amount, psp.swapCalldata);
   }
 }

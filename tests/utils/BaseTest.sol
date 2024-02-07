@@ -98,9 +98,9 @@ contract BaseTest is Test {
   }
 
   /**
-   * @dev Ensure offset is correct when swapping full amount
+   * @dev Ensure the amount offset in ParaSwap calldata is correct
    */
-  function _ensureCorrectOffset(
+  function _checkAmountInParaSwapCalldata(
     uint256 offset,
     uint256 amount,
     bytes memory swapCalldata

@@ -307,6 +307,7 @@ Security considerations around the ParaSwap adapter contracts:
     - Example for `BUY`: API call of `buy(x,y)` and swap transaction of `buy(x',y')`. If `y'>y` then `x'>x`, so positive slippage happens as user is receiving more assets than expected.
     - Example for `SELL`: API call of `sell(x,y)` and swap transaction of `sell(x',y')`. If `x'>x` then `y'>y`, so positive slippage happens as user is receiving more assets than expected.
   - In ParaSwapLiquditySwapAdapter, fetching of ParaSwap route for swapping from collateral asset to another asset with flashloan enabled should take flashloanFee into consideration. As ParaSwapLiquditySwapAdapter swaps (collateralAmountToSwap - flashloanFee) to guarantee that flashloanFee is paid, generating routes with (collateralAmountToSwap - flashloanFee) is recommended.
+    - Example: User wants to swap `1000 BUSD` collateral to `min(995 USDC)` collateral and with flashloan enabled. The ParaSwap route should be generated for selling (1000 BUSD - 0.9 BUSD) to buy USDC assuming (0.09% flashloan fee). Thus, ParaSwapLiquditySwapAdapter will flashloan (1000 BUSD) but will sell (1000 BUSD - 0.9 BUSD) to ensure that 0.9 BUSD stays in the contract to pay flashloan premium.
 
 ## Install
 

@@ -21,14 +21,15 @@ import {AaveV3Base} from 'aave-address-book/AaveV3Base.sol';
 import {ParaSwapDebtSwapAdapterV3} from 'src/contracts/ParaSwapDebtSwapAdapterV3.sol';
 import {ParaSwapDebtSwapAdapterV3GHO} from 'src/contracts/ParaSwapDebtSwapAdapterV3GHO.sol';
 import {ParaSwapDebtSwapAdapterV2} from 'src/contracts/ParaSwapDebtSwapAdapterV2.sol';
-import {AugustusRegistry} from 'src/lib/AugustusRegistry.sol';
+import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';
 
 contract EthereumV2 is EthereumScript {
   function run() external broadcast {
     new ParaSwapDebtSwapAdapterV2(
       IPoolAddressesProvider(address(AaveV2Ethereum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV2Ethereum.POOL),
-      AugustusRegistry.ETHEREUM,
+      IParaSwapAugustusRegistry(AugustusRegistry.ETHEREUM),
       GovernanceV3Ethereum.EXECUTOR_LVL_1
     );
   }
@@ -39,7 +40,7 @@ contract EthereumV3 is EthereumScript {
     new ParaSwapDebtSwapAdapterV3GHO(
       IPoolAddressesProvider(address(AaveV3Ethereum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Ethereum.POOL),
-      AugustusRegistry.ETHEREUM,
+      IParaSwapAugustusRegistry(AugustusRegistry.ETHEREUM),
       GovernanceV3Ethereum.EXECUTOR_LVL_1
     );
   }
@@ -50,7 +51,7 @@ contract PolygonV2 is PolygonScript {
     new ParaSwapDebtSwapAdapterV2(
       IPoolAddressesProvider(address(AaveV2Polygon.POOL_ADDRESSES_PROVIDER)),
       address(AaveV2Polygon.POOL),
-      AugustusRegistry.POLYGON,
+      IParaSwapAugustusRegistry(AugustusRegistry.POLYGON),
       GovernanceV3Polygon.EXECUTOR_LVL_1
     );
   }
@@ -61,7 +62,7 @@ contract PolygonV3 is PolygonScript {
     new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Polygon.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Polygon.POOL),
-      AugustusRegistry.POLYGON,
+      IParaSwapAugustusRegistry(AugustusRegistry.POLYGON),
       GovernanceV3Polygon.EXECUTOR_LVL_1
     );
   }
@@ -72,7 +73,7 @@ contract AvalancheV2 is AvalancheScript {
     new ParaSwapDebtSwapAdapterV2(
       IPoolAddressesProvider(address(AaveV2Avalanche.POOL_ADDRESSES_PROVIDER)),
       address(AaveV2Avalanche.POOL),
-      AugustusRegistry.AVALANCHE,
+      IParaSwapAugustusRegistry(AugustusRegistry.AVALANCHE),
       GovernanceV3Avalanche.EXECUTOR_LVL_1
     );
   }
@@ -83,7 +84,7 @@ contract AvalancheV3 is AvalancheScript {
     new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Avalanche.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Avalanche.POOL),
-      AugustusRegistry.AVALANCHE,
+      IParaSwapAugustusRegistry(AugustusRegistry.AVALANCHE),
       GovernanceV3Avalanche.EXECUTOR_LVL_1
     );
   }
@@ -94,7 +95,7 @@ contract ArbitrumV3 is ArbitrumScript {
     new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Arbitrum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Arbitrum.POOL),
-      AugustusRegistry.ARBITRUM,
+      IParaSwapAugustusRegistry(AugustusRegistry.ARBITRUM),
       GovernanceV3Arbitrum.EXECUTOR_LVL_1
     );
   }
@@ -105,7 +106,7 @@ contract OptimismV3 is OptimismScript {
     new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Optimism.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Optimism.POOL),
-      AugustusRegistry.OPTIMISM,
+      IParaSwapAugustusRegistry(AugustusRegistry.OPTIMISM),
       GovernanceV3Optimism.EXECUTOR_LVL_1
     );
   }
@@ -116,7 +117,7 @@ contract BaseV3 is BaseScript {
     new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3Base.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Base.POOL),
-      AugustusRegistry.BASE,
+      IParaSwapAugustusRegistry(AugustusRegistry.BASE),
       GovernanceV3Base.EXECUTOR_LVL_1
     );
   }

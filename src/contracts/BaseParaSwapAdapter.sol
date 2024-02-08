@@ -8,7 +8,7 @@ import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {IPriceOracleGetter} from '@aave/core-v3/contracts/interfaces/IPriceOracleGetter.sol';
 import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {Ownable} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
-import {IBaseParaSwapAdapter} from '../interfaces/IBaseParaSwapAdapter.sol';
+import {IBaseParaSwapAdapter} from './interfaces/IBaseParaSwapAdapter.sol';
 
 /**
  * @title BaseParaSwapAdapter

@@ -4,14 +4,14 @@ pragma solidity ^0.8.10;
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {BaseParaSwapAdapter} from 'src/contracts/BaseParaSwapAdapter.sol';
-import {IParaSwapAugustusRegistry} from 'src/interfaces/IParaSwapAugustusRegistry.sol';
-import {BaseParaSwapBuyAdapter} from 'src/contracts/BaseParaSwapBuyAdapter.sol';
+import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {BaseParaSwapSellAdapter} from 'src/contracts/BaseParaSwapSellAdapter.sol';
 
 /**
- * @title ParaSwapBuyAdapterHarness
- * @notice Harness contract for BaseParaSwapBuyAdapter
+ * @title ParaSwapSellAdapterHarness
+ * @notice Harness contract for BaseParaSwapSellAdapter
  */
-contract ParaSwapBuyAdapterHarness is BaseParaSwapBuyAdapter {
+contract ParaSwapSellAdapterHarness is BaseParaSwapSellAdapter {
   /**
    * @dev Constructor
    * @param addressesProvider The address of the Aave PoolAddressesProvider contract
@@ -22,37 +22,37 @@ contract ParaSwapBuyAdapterHarness is BaseParaSwapBuyAdapter {
     IPoolAddressesProvider addressesProvider,
     address pool,
     IParaSwapAugustusRegistry augustusRegistry
-  ) BaseParaSwapBuyAdapter(addressesProvider, pool, augustusRegistry) {
+  ) BaseParaSwapSellAdapter(addressesProvider, pool, augustusRegistry) {
     // intentionally left blank
   }
 
   /**
-   * @dev Swaps a token for another using ParaSwap (exact out)
-   * @dev In case the swap output is higher than the designated amount to buy, the excess remains in the contract
-   * @param toAmountOffset Offset of toAmount in Augustus calldata if it should be overwritten, otherwise 0
+   * @dev Swaps a token for another using ParaSwap (exact in)
+   * @dev In case the swap input is less than the designated amount to sell, the excess remains in the contract
+   * @param fromAmountOffset Offset of fromAmount in Augustus calldata if it should be overwritten, otherwise 0
    * @param paraswapData Data for Paraswap Adapter
    * @param assetToSwapFrom The address of the asset to swap from
    * @param assetToSwapTo The address of the asset to swap to
-   * @param maxAmountToSwap The maximum amount of asset to swap from
-   * @param amountToReceive The amount of asset to receive
-   * @return amountSold The amount of asset sold
+   * @param amountToSwap The amount of asset to swap from
+   * @param minAmountToReceive The minimum amount to receive
+   * @return amountReceived The amount of asset bought
    */
-  function buyOnParaSwap(
-    uint256 toAmountOffset,
+  function sellOnParaSwap(
+    uint256 fromAmountOffset,
     bytes memory paraswapData,
     IERC20Detailed assetToSwapFrom,
     IERC20Detailed assetToSwapTo,
-    uint256 maxAmountToSwap,
-    uint256 amountToReceive
-  ) external returns (uint256 amountSold) {
+    uint256 amountToSwap,
+    uint256 minAmountToReceive
+  ) external returns (uint256 amountReceived) {
     return
-      _buyOnParaSwap(
-        toAmountOffset,
+      _sellOnParaSwap(
+        fromAmountOffset,
         paraswapData,
         assetToSwapFrom,
         assetToSwapTo,
-        maxAmountToSwap,
-        amountToReceive
+        amountToSwap,
+        minAmountToReceive
       );
   }
 

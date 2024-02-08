@@ -7,10 +7,10 @@ import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
 import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
-import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
-import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
-import {IAaveFlashLoanReceiver} from '../interfaces/IAaveFlashLoanReceiver.sol';
-import {IParaSwapLiquiditySwapAdapter} from '../interfaces/IParaSwapLiquiditySwapAdapter.sol';
+import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {IParaSwapAugustus} from './dependencies/paraswap/IParaSwapAugustus.sol';
+import {IAaveFlashLoanReceiver} from './interfaces/IAaveFlashLoanReceiver.sol';
+import {IParaSwapLiquiditySwapAdapter} from './interfaces/IParaSwapLiquiditySwapAdapter.sol';
 import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 
 /**

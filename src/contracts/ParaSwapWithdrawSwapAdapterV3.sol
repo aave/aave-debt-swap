@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
+import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 import {ParaSwapWithdrawSwapAdapter} from './ParaSwapWithdrawSwapAdapter.sol';

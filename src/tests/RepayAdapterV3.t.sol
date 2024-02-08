@@ -8,9 +8,10 @@ import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {Errors} from 'aave-address-book/AaveV3.sol';
 import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/AaveV3Ethereum.sol';
 import {BaseTest} from './utils/BaseTest.sol';
-import {ParaSwapRepayAdapterV3} from '../src/contracts/ParaSwapRepayAdapterV3.sol';
-import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
-import {IParaSwapRepayAdapter} from '../src/interfaces/IParaSwapRepayAdapter.sol';
+import {ParaSwapRepayAdapterV3} from 'src/contracts/ParaSwapRepayAdapterV3.sol';
+import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';
+import {IParaSwapRepayAdapter} from 'src/contracts/interfaces/IParaSwapRepayAdapter.sol';
 import {stdMath} from 'forge-std/StdMath.sol';
 import 'forge-std/Test.sol';
 
@@ -24,7 +25,7 @@ contract RepayAdapterV3Test is BaseTest {
     repayAdapter = new ParaSwapRepayAdapterV3(
       IPoolAddressesProvider(address(AaveV3Ethereum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Ethereum.POOL),
-      AugustusRegistry.ETHEREUM,
+      IParaSwapAugustusRegistry(AugustusRegistry.ETHEREUM),
       AaveGovernanceV2.SHORT_EXECUTOR
     );
     vm.startPrank(AaveV3Ethereum.ACL_ADMIN);

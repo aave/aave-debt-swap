@@ -9,7 +9,7 @@ import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
-import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
+import {IAaveFlashLoanReceiver} from '../interfaces/IAaveFlashLoanReceiver.sol';
 import {IParaSwapLiquiditySwapAdapter} from '../interfaces/IParaSwapLiquiditySwapAdapter.sol';
 import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 
@@ -23,7 +23,7 @@ import {BaseParaSwapSellAdapter} from './BaseParaSwapSellAdapter.sol';
 abstract contract ParaSwapLiquiditySwapAdapter is
   BaseParaSwapSellAdapter,
   ReentrancyGuard,
-  IFlashLoanReceiver,
+  IAaveFlashLoanReceiver,
   IParaSwapLiquiditySwapAdapter
 {
   using SafeERC20 for IERC20;

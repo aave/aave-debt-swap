@@ -10,7 +10,7 @@ import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzepp
 import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
 import {IParaSwapAugustusRegistry} from '../interfaces/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from '../interfaces/IParaSwapAugustus.sol';
-import {IFlashLoanReceiver} from '../interfaces/IFlashLoanReceiver.sol';
+import {IAaveFlashLoanReceiver} from '../interfaces/IAaveFlashLoanReceiver.sol';
 import {ICreditDelegationToken} from '../interfaces/ICreditDelegationToken.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IParaSwapDebtSwapAdapter} from '../interfaces/IParaSwapDebtSwapAdapter.sol';
@@ -23,7 +23,7 @@ import {IParaSwapDebtSwapAdapter} from '../interfaces/IParaSwapDebtSwapAdapter.s
 abstract contract ParaSwapDebtSwapAdapter is
   BaseParaSwapBuyAdapter,
   ReentrancyGuard,
-  IFlashLoanReceiver,
+  IAaveFlashLoanReceiver,
   IParaSwapDebtSwapAdapter
 {
   using SafeERC20 for IERC20WithPermit;

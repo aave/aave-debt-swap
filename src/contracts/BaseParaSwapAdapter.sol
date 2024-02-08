@@ -8,7 +8,6 @@ import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {IPriceOracleGetter} from '@aave/core-v3/contracts/interfaces/IPriceOracleGetter.sol';
 import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {Ownable} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
-import {IFlashLoanReceiverBase} from '../interfaces/IFlashLoanReceiverBase.sol';
 import {IBaseParaSwapAdapter} from '../interfaces/IBaseParaSwapAdapter.sol';
 
 /**
@@ -16,7 +15,7 @@ import {IBaseParaSwapAdapter} from '../interfaces/IBaseParaSwapAdapter.sol';
  * @notice Utility functions for adapters using ParaSwap
  * @author Jason Raymond Bell
  */
-abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseParaSwapAdapter {
+abstract contract BaseParaSwapAdapter is Ownable, IBaseParaSwapAdapter {
   using SafeERC20 for IERC20;
 
   // @inheritdoc IBaseParaSwapAdapter
@@ -25,10 +24,10 @@ abstract contract BaseParaSwapAdapter is Ownable, IFlashLoanReceiverBase, IBaseP
   // @inheritdoc IBaseParaSwapAdapter
   IPriceOracleGetter public immutable ORACLE;
 
-  /// @inheritdoc IFlashLoanReceiverBase
+  // Aave PoolAddressesProvider
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
-  /// @inheritdoc IFlashLoanReceiverBase
+  // Aave Pool
   IPool public immutable POOL;
 
   /**

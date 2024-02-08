@@ -7,7 +7,7 @@ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/
 import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
 import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {IERC3156FlashBorrower} from './interfaces/IERC3156FlashBorrower.sol';
 import {IERC3156FlashLender} from './interfaces/IERC3156FlashLender.sol';
 

@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import {ParaSwapDebtSwapAdapter} from './ParaSwapDebtSwapAdapter.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
 
 /**

@@ -8,7 +8,7 @@ import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IE
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
 import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
-import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {IParaSwapAugustus} from './dependencies/paraswap/IParaSwapAugustus.sol';
 import {IAaveFlashLoanReceiver} from './interfaces/IAaveFlashLoanReceiver.sol';
 import {ICreditDelegationToken} from './interfaces/ICreditDelegationToken.sol';

@@ -2,11 +2,10 @@
 pragma solidity ^0.8.0;
 
 /**
- * @dev altered version of official Aave Interface(IFlashLoanReceiver) removing immutables, for easier inheritance
  * @title IAaveFlashLoanReceiver
- * @author Aave
- * @notice Defines the basic interface of a flashloan-receiver contract.
- * @dev Implement this interface to develop a flashloan-compatible flashLoanReceiver contract
+ * @author Aave Labs
+ * @notice Defines the basic interface of an Aave flashloan-receiver contract.
+ * @dev Altered version of the official Aave Interface IFlashLoanReceiver, keeping the minimal functionality to receive the flashloan execution
  **/
 interface IAaveFlashLoanReceiver {
   /**

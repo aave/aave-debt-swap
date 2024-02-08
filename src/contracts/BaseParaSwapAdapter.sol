@@ -24,10 +24,10 @@ abstract contract BaseParaSwapAdapter is Ownable, IBaseParaSwapAdapter {
   // @inheritdoc IBaseParaSwapAdapter
   IPriceOracleGetter public immutable ORACLE;
 
-  // Aave PoolAddressesProvider
+  /// The address of the Aave PoolAddressesProvider contract
   IPoolAddressesProvider public immutable ADDRESSES_PROVIDER;
 
-  // Aave Pool
+  /// The address of the Aave Pool contract
   IPool public immutable POOL;
 
   /**

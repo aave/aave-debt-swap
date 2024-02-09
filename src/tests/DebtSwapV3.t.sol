@@ -8,12 +8,12 @@ import {Errors} from '@aave/core-v3/contracts/protocol/libraries/helpers/Errors.
 import {ICreditDelegationToken} from '@aave/core-v3/contracts/interfaces/ICreditDelegationToken.sol';
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/AaveV3Ethereum.sol';
-import {BaseTest} from './utils/BaseTest.sol';
 import {IParaSwapDebtSwapAdapter} from 'src/contracts/interfaces/IParaSwapDebtSwapAdapter.sol';
 import {ParaSwapDebtSwapAdapter} from 'src/contracts/base/ParaSwapDebtSwapAdapter.sol';
 import {ParaSwapDebtSwapAdapterV3} from 'src/contracts/ParaSwapDebtSwapAdapterV3.sol';
 import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';
+import {BaseTest} from './utils/BaseTest.sol';
 import {SigUtils} from './utils/SigUtils.sol';
 
 contract DebtSwapV3Test is BaseTest {

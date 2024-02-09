@@ -5,13 +5,12 @@ import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {AaveV2Ethereum, AaveV2EthereumAssets, ILendingPool} from 'aave-address-book/AaveV2Ethereum.sol';
-import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapWithdrawSwapAdapterV2} from 'src/contracts/ParaSwapWithdrawSwapAdapterV2.sol';
 import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';
 import {IParaSwapWithdrawSwapAdapter} from 'src/contracts/interfaces/IParaSwapWithdrawSwapAdapter.sol';
 import {IBaseParaSwapAdapter} from 'src/contracts/interfaces/IBaseParaSwapAdapter.sol';
-import {stdMath} from 'forge-std/StdMath.sol';
+import {BaseTest} from './utils/BaseTest.sol';
 
 contract WithdrawSwapAdapterV2Test is BaseTest {
   ParaSwapWithdrawSwapAdapterV2 internal withdrawSwapAdapter;
@@ -111,7 +110,6 @@ contract WithdrawSwapAdapterV2Test is BaseTest {
   }
 
   function test_revert_withdrawSwap_max_collateral() public {
-    address aToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address newAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
 
@@ -155,7 +153,6 @@ contract WithdrawSwapAdapterV2Test is BaseTest {
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address newAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address newAssetAToken = AaveV2EthereumAssets.LUSD_A_TOKEN;
 
     uint256 supplyAmount = 10_000 ether;
 
@@ -218,7 +215,6 @@ contract WithdrawSwapAdapterV2Test is BaseTest {
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address newAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address newAssetAToken = AaveV2EthereumAssets.LUSD_A_TOKEN;
 
     uint256 supplyAmount = 10_000 ether;
 
@@ -286,7 +282,6 @@ contract WithdrawSwapAdapterV2Test is BaseTest {
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address newAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address newAssetAToken = AaveV2EthereumAssets.LUSD_A_TOKEN;
 
     uint256 supplyAmount = 10_000 ether;
 
@@ -340,10 +335,6 @@ contract WithdrawSwapAdapterV2Test is BaseTest {
       'invalid amount received'
     );
     _invariant(address(withdrawSwapAdapter), collateralAsset, newAsset);
-  }
-
-  function _withinRange(uint256 a, uint256 b, uint256 diff) internal returns (bool) {
-    return stdMath.delta(a, b) <= diff;
   }
 
   function _supply(ILendingPool pool, uint256 amount, address asset) internal {

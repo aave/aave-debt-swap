@@ -11,8 +11,6 @@ import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IPa
 import {IParaSwapLiquiditySwapAdapter} from 'src/contracts/interfaces/IParaSwapLiquiditySwapAdapter.sol';
 import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';
 import {BaseTest} from './utils/BaseTest.sol';
-import {stdMath} from 'forge-std/StdMath.sol';
-import 'forge-std/Test.sol';
 
 contract LiquiditySwapAdapterV2Test is BaseTest {
   ParaSwapLiquiditySwapAdapterV2 internal liquiditySwapAdapter;
@@ -665,9 +663,5 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
 
   function _withdraw(ILendingPool pool, uint256 amount, address asset) internal {
     pool.withdraw(asset, amount, user);
-  }
-
-  function _withinRange(uint256 a, uint256 b, uint256 diff) internal returns (bool) {
-    return stdMath.delta(a, b) <= diff;
   }
 }

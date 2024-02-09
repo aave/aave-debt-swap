@@ -7,13 +7,11 @@ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAd
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {Errors} from 'aave-address-book/AaveV3.sol';
 import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/AaveV3Ethereum.sol';
-import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapRepayAdapterV3} from 'src/contracts/ParaSwapRepayAdapterV3.sol';
 import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';
 import {IParaSwapRepayAdapter} from 'src/contracts/interfaces/IParaSwapRepayAdapter.sol';
-import {stdMath} from 'forge-std/StdMath.sol';
-import 'forge-std/Test.sol';
+import {BaseTest} from './utils/BaseTest.sol';
 
 contract RepayAdapterV3Test is BaseTest {
   ParaSwapRepayAdapterV3 internal repayAdapter;
@@ -531,7 +529,4 @@ contract RepayAdapterV3Test is BaseTest {
     pool.withdraw(asset, amount, user);
   }
 
-  function _withinRange(uint256 a, uint256 b, uint256 diff) internal returns (bool) {
-    return stdMath.delta(a, b) <= diff;
-  }
 }

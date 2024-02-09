@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
+import {stdMath} from 'forge-std/StdMath.sol';
 import {AaveV3Polygon} from 'aave-address-book/AaveV3Polygon.sol';
 import {DataTypes} from 'aave-address-book/AaveV3.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
@@ -95,6 +96,10 @@ contract BaseTest is Test {
       0,
       'LEFTOVER_NEW_DEBT_ASSET'
     );
+  }
+
+  function _withinRange(uint256 a, uint256 b, uint256 diff) internal pure returns (bool) {
+    return stdMath.delta(a, b) <= diff;
   }
 
   /**

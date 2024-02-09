@@ -98,11 +98,22 @@ async function main(from, to, method, amount, user) {
     process.stdout.write(file);
     return;
   }
-  // distinguish between exactOut and exactInoutdMethod
+  // distinguish between exactOut and exactInOutMethod
   const excludedMethod =
     method === "SELL"
-      ? [ContractMethod.simpleSwap]
-      : [ContractMethod.simpleBuy, ContractMethod.directUniV3Buy];
+      ? [
+          ContractMethod.simpleSwap,
+          ContractMethod.directUniV3Swap,
+          ContractMethod.directBalancerV2GivenInSwap,
+          ContractMethod.directBalancerV2GivenOutSwap,
+          ContractMethod.directCurveV1Swap,
+          ContractMethod.directCurveV2Swap,
+        ]
+      : [
+          ContractMethod.simpleBuy,
+          ContractMethod.directUniV3Buy,
+          ContractMethod.directBalancerV2GivenOutSwap,
+        ];
   const priceRoute = await paraSwapMin.swap.getRate({
     srcToken: from,
     srcDecimals: FROM_DECIMALS,

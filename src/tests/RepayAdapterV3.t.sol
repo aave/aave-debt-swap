@@ -134,7 +134,6 @@ contract RepayAdapterV3Test is BaseTest {
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV3EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
@@ -319,7 +318,6 @@ contract RepayAdapterV3Test is BaseTest {
 
     skip(1 hours);
 
-    uint256 maxCollateralAssetToSwap = 10_500 ether;
     uint256 debtRepayAmount = 10_000 ether; //borrowAmount
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
@@ -371,7 +369,6 @@ contract RepayAdapterV3Test is BaseTest {
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV3EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
@@ -380,7 +377,6 @@ contract RepayAdapterV3Test is BaseTest {
     skip(1 hours);
 
     uint256 debtRepayAmount = 9100 ether;
-    uint256 maxCollateralAmountToSwap = 9500 ether;
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       debtAsset,
@@ -415,7 +411,6 @@ contract RepayAdapterV3Test is BaseTest {
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV3EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
@@ -469,7 +464,6 @@ contract RepayAdapterV3Test is BaseTest {
     skip(1 hours);
 
     uint256 debtRepayAmount = 9100 ether;
-    uint256 maxCollateralAmountToSwap = 9500 ether;
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       debtAsset,

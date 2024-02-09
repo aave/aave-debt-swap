@@ -357,7 +357,6 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address newCollateralAssetAToken = AaveV2EthereumAssets.LUSD_A_TOKEN;
 
     uint256 supplyAmount = 10_000 ether;
     uint256 borrowAmount = 1000 ether;
@@ -417,9 +416,6 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     _supply(AaveV2Ethereum.POOL, 15000e6, anotherCollateralAsset);
     _borrow(AaveV2Ethereum.POOL, borrowAmount, collateralAsset);
 
-    uint256 oldCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
     uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken)
       .balanceOf(user);
 
@@ -546,7 +542,7 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV2EthereumAssets.USDC_UNDERLYING;
-    address newCollateralAssetAToken = AaveV2EthereumAssets.USDC_A_TOKEN;
+
     vm.startPrank(user);
 
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
@@ -601,9 +597,6 @@ contract LiquiditySwapAdapterV2Test is BaseTest {
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
     _borrow(AaveV2Ethereum.POOL, borrowAmount, collateralAsset);
 
-    uint256 oldCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
     uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken)
       .balanceOf(user);
 

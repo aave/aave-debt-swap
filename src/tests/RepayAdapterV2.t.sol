@@ -272,7 +272,6 @@ contract RepayAdapterV2Test is BaseTest {
     skip(1 hours);
 
     uint256 debtRepayAmount = 9100 ether;
-    uint256 maxCollateralAmountToSwap = 9500 ether;
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       debtAsset,
@@ -322,7 +321,6 @@ contract RepayAdapterV2Test is BaseTest {
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
@@ -366,7 +364,6 @@ contract RepayAdapterV2Test is BaseTest {
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
@@ -411,7 +408,6 @@ contract RepayAdapterV2Test is BaseTest {
     address collateralAsset = AaveV2EthereumAssets.DAI_UNDERLYING;
     address collateralAssetAToken = AaveV2EthereumAssets.DAI_A_TOKEN;
     address debtAsset = AaveV2EthereumAssets.LUSD_UNDERLYING;
-    address debtAssetVToken = AaveV2EthereumAssets.LUSD_V_TOKEN;
 
     vm.startPrank(user);
     _supply(AaveV2Ethereum.POOL, supplyAmount, collateralAsset);
@@ -464,7 +460,6 @@ contract RepayAdapterV2Test is BaseTest {
     skip(1 hours);
 
     uint256 debtRepayAmount = 9100 ether;
-    uint256 maxCollateralAmountToSwap = 9500 ether;
     PsPResponse memory psp = _fetchPSPRoute(
       collateralAsset,
       debtAsset,

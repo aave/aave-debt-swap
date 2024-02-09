@@ -7,12 +7,13 @@ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAd
 import {Errors} from '@aave/core-v3/contracts/protocol/libraries/helpers/Errors.sol';
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/AaveV3Ethereum.sol';
+import {ICreditDelegationToken} from 'src/contracts/interfaces/ICreditDelegationToken.sol';
+import {IParaSwapDebtSwapAdapter} from 'src/contracts/interfaces/IParaSwapDebtSwapAdapter.sol';
+import {ParaSwapDebtSwapAdapter} from 'src/contracts/ParaSwapDebtSwapAdapter.sol';
+import {ParaSwapDebtSwapAdapterV3GHO} from 'src/contracts/ParaSwapDebtSwapAdapterV3GHO.sol';
+import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';
 import {BaseTest} from './utils/BaseTest.sol';
-import {ICreditDelegationToken} from '../src/interfaces/ICreditDelegationToken.sol';
-import {IParaSwapDebtSwapAdapter} from '../src/interfaces/IParaSwapDebtSwapAdapter.sol';
-import {ParaSwapDebtSwapAdapter} from '../src/contracts/ParaSwapDebtSwapAdapter.sol';
-import {ParaSwapDebtSwapAdapterV3GHO} from '../src/contracts/ParaSwapDebtSwapAdapterV3GHO.sol';
-import {AugustusRegistry} from '../src/lib/AugustusRegistry.sol';
 import {SigUtils} from './utils/SigUtils.sol';
 
 contract DebtSwapV3GHOTest is BaseTest {
@@ -25,7 +26,7 @@ contract DebtSwapV3GHOTest is BaseTest {
     debtSwapAdapter = new ParaSwapDebtSwapAdapterV3GHO(
       IPoolAddressesProvider(address(AaveV3Ethereum.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3Ethereum.POOL),
-      AugustusRegistry.ETHEREUM,
+      IParaSwapAugustusRegistry(AugustusRegistry.ETHEREUM),
       AaveGovernanceV2.SHORT_EXECUTOR
     );
   }

@@ -92,7 +92,7 @@ const augustusToAmountOffsetFromCalldata = (calldata) => {
 
 async function main(from, to, method, amount, user) {
   // check cache and return cache if available
-  const filePath = path.join(process.cwd(), "tests/pspcache", hash);
+  const filePath = path.join(process.cwd(), "src/tests/.pspcache", hash);
   if (fs.existsSync(filePath)) {
     const file = fs.readFileSync(filePath);
     process.stdout.write(file);

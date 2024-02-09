@@ -1,7 +1,7 @@
 [profile.default]
-src = 'src'
-test = 'tests'
-script = 'scripts'
+src = 'src/contracts'
+test = 'src/tests'
+script = 'src/script'
 out = 'out'
 libs = ['lib']
 remappings = [

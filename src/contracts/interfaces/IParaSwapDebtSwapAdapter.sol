@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {ICreditDelegationToken} from './ICreditDelegationToken.sol';
+import {ICreditDelegationToken} from '@aave/core-v3/contracts/interfaces/ICreditDelegationToken.sol';
 import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 
 interface IParaSwapDebtSwapAdapter is IBaseParaSwapAdapter {

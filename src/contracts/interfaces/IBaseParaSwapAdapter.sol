@@ -12,12 +12,12 @@ import {IPriceOracleGetter} from '@aave/core-v3/contracts/interfaces/IPriceOracl
  **/
 interface IBaseParaSwapAdapter {
   struct PermitInput {
-    IERC20WithPermit aToken;
-    uint256 value;
-    uint256 deadline;
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
+    IERC20WithPermit aToken; // the asset to give allowance for
+    uint256 value; // the amount of asset for the allowance
+    uint256 deadline; // expiration unix timestamp
+    uint8 v; // sig v
+    bytes32 r; // sig r
+    bytes32 s; // sig s
   }
 
   /**

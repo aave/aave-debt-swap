@@ -6,7 +6,7 @@ import {IBaseParaSwapAdapter} from './IBaseParaSwapAdapter.sol';
 /**
  * @title IParaSwapWithdrawSwapAdapter
  * @notice Defines the basic interface for ParaSwapWithdrawSwapAdapter
- * @dev Implement this interface to provide functionality of withdrawing the asset from Aave pool and swapping it to another asset
+ * @dev Implement this interface to provide functionality of withdrawing from the Aave Pool and swapping to another asset
  * @author Aave Labs
  **/
 interface IParaSwapWithdrawSwapAdapter is IBaseParaSwapAdapter {

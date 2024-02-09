@@ -19,8 +19,11 @@ contract ParaSwapDebtSwapAdapterV3 is ParaSwapDebtSwapAdapter {
     address pool,
     IParaSwapAugustusRegistry augustusRegistry,
     address owner
-  ) ParaSwapDebtSwapAdapter(addressesProvider, pool, augustusRegistry, owner) {}
+  ) ParaSwapDebtSwapAdapter(addressesProvider, pool, augustusRegistry, owner) {
+    // Intentionally left blank
+  }
 
+  /// @inheritdoc BaseParaSwapAdapter
   function _getReserveData(
     address asset
   ) internal view override returns (address, address, address) {
@@ -32,6 +35,7 @@ contract ParaSwapDebtSwapAdapterV3 is ParaSwapDebtSwapAdapter {
     );
   }
 
+  /// @inheritdoc BaseParaSwapAdapter
   function _supply(
     address asset,
     uint256 amount,

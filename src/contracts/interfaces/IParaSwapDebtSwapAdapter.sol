@@ -15,8 +15,8 @@ interface IParaSwapDebtSwapAdapter is IBaseParaSwapAdapter {
     address debtAsset; // the asset to swap debt from
     uint256 debtRepayAmount; // the amount of asset to swap from
     uint256 debtRateMode; // debt interest rate mode (1 for stable, 2 for variable)
-    address nestedFlashloanDebtAsset;  // the new debt asset if need of extra collateral, 0 otherwise 
-    uint256 nestedFlashloanDebtAmount; // the amount of extra collateral (in case it is needed)
+    address nestedFlashloanDebtAsset;  // 0 if no need of extra collateral. Otherwise internally used for new debt asset
+    uint256 nestedFlashloanDebtAmount; // internally used for the amount of new debt asset in case extra collateral
     bytes paraswapData; // encoded paraswap data
     uint256 offset; // offset in buy calldata in case of swapping all debt, otherwise 0
     address user; // the address of user

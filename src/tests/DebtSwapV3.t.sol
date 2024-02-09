@@ -10,7 +10,7 @@ import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/Aav
 import {BaseTest} from './utils/BaseTest.sol';
 import {ICreditDelegationToken} from 'src/contracts/interfaces/ICreditDelegationToken.sol';
 import {IParaSwapDebtSwapAdapter} from 'src/contracts/interfaces/IParaSwapDebtSwapAdapter.sol';
-import {ParaSwapDebtSwapAdapter} from 'src/contracts/ParaSwapDebtSwapAdapter.sol';
+import {ParaSwapDebtSwapAdapter} from 'src/contracts/base/ParaSwapDebtSwapAdapter.sol';
 import {ParaSwapDebtSwapAdapterV3} from 'src/contracts/ParaSwapDebtSwapAdapterV3.sol';
 import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';

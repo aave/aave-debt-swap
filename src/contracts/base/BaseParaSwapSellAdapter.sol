@@ -5,8 +5,8 @@ import {PercentageMath} from '@aave/core-v3/contracts/protocol/libraries/math/Pe
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {SafeERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {IParaSwapAugustus} from './dependencies/paraswap/IParaSwapAugustus.sol';
-import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {IParaSwapAugustus} from '../dependencies/paraswap/IParaSwapAugustus.sol';
+import {IParaSwapAugustusRegistry} from '../dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
 
 /**

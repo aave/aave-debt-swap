@@ -9,6 +9,7 @@ import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contract
 import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {IERC3156FlashBorrower} from './interfaces/IERC3156FlashBorrower.sol';
 import {IERC3156FlashLender} from './interfaces/IERC3156FlashLender.sol';
+import {BaseParaSwapAdapter} from './base/BaseParaSwapAdapter.sol';
 import {ParaSwapDebtSwapAdapterV3} from './ParaSwapDebtSwapAdapterV3.sol';
 
 // send collateral if needed via params

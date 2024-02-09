@@ -4,8 +4,8 @@ pragma solidity ^0.8.10;
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
 import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
-import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
-import {ParaSwapWithdrawSwapAdapter} from './ParaSwapWithdrawSwapAdapter.sol';
+import {BaseParaSwapAdapter} from './base/BaseParaSwapAdapter.sol';
+import {ParaSwapWithdrawSwapAdapter} from './base/ParaSwapWithdrawSwapAdapter.sol';
 
 /**
  * @title ParaSwapWithdrawSwapAdapterV2

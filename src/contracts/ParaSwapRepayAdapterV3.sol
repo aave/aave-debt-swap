@@ -5,8 +5,8 @@ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAd
 import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
-import {BaseParaSwapAdapter} from './BaseParaSwapAdapter.sol';
-import {ParaSwapRepayAdapter} from './ParaSwapRepayAdapter.sol';
+import {BaseParaSwapAdapter} from './base/BaseParaSwapAdapter.sol';
+import {ParaSwapRepayAdapter} from './base/ParaSwapRepayAdapter.sol';
 
 /**
  * @title ParaSwapRepayAdapterV3

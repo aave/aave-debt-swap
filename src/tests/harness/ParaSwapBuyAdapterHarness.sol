@@ -3,9 +3,9 @@ pragma solidity ^0.8.10;
 
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
-import {BaseParaSwapAdapter} from 'src/contracts/BaseParaSwapAdapter.sol';
 import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
-import {BaseParaSwapBuyAdapter} from 'src/contracts/BaseParaSwapBuyAdapter.sol';
+import {BaseParaSwapAdapter} from 'src/contracts/base/BaseParaSwapAdapter.sol';
+import {BaseParaSwapBuyAdapter} from 'src/contracts/base/BaseParaSwapBuyAdapter.sol';
 
 /**
  * @title ParaSwapBuyAdapterHarness

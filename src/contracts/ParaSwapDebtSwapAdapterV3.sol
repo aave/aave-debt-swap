@@ -5,7 +5,8 @@ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAd
 import {IPool} from '@aave/core-v3/contracts/interfaces/IPool.sol';
 import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
 import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
-import {ParaSwapDebtSwapAdapter} from './ParaSwapDebtSwapAdapter.sol';
+import {BaseParaSwapAdapter} from './base/BaseParaSwapAdapter.sol';
+import {ParaSwapDebtSwapAdapter} from './base/ParaSwapDebtSwapAdapter.sol';
 
 /**
  * @title ParaSwapDebtSwapAdapter
@@ -18,8 +19,11 @@ contract ParaSwapDebtSwapAdapterV3 is ParaSwapDebtSwapAdapter {
     address pool,
     IParaSwapAugustusRegistry augustusRegistry,
     address owner
-  ) ParaSwapDebtSwapAdapter(addressesProvider, pool, augustusRegistry, owner) {}
+  ) ParaSwapDebtSwapAdapter(addressesProvider, pool, augustusRegistry, owner) {
+    // Intentionally left blank
+  }
 
+  /// @inheritdoc BaseParaSwapAdapter
   function _getReserveData(
     address asset
   ) internal view override returns (address, address, address) {
@@ -31,6 +35,7 @@ contract ParaSwapDebtSwapAdapterV3 is ParaSwapDebtSwapAdapter {
     );
   }
 
+  /// @inheritdoc BaseParaSwapAdapter
   function _supply(
     address asset,
     uint256 amount,

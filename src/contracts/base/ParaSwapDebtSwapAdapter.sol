@@ -4,16 +4,15 @@ pragma solidity ^0.8.10;
 import {DataTypes} from '@aave/core-v3/contracts/protocol/libraries/types/DataTypes.sol';
 import {IERC20Detailed} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IERC20} from '@aave/core-v3/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
-import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
+import {ICreditDelegationToken} from '@aave/core-v3/contracts/interfaces/ICreditDelegationToken.sol';
 import {ReentrancyGuard} from 'aave-v3-periphery/contracts/dependencies/openzeppelin/ReentrancyGuard.sol';
-import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
-import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
-import {IParaSwapAugustus} from './dependencies/paraswap/IParaSwapAugustus.sol';
-import {IAaveFlashLoanReceiver} from './interfaces/IAaveFlashLoanReceiver.sol';
-import {ICreditDelegationToken} from './interfaces/ICreditDelegationToken.sol';
+import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
-import {IParaSwapDebtSwapAdapter} from './interfaces/IParaSwapDebtSwapAdapter.sol';
+import {IParaSwapAugustusRegistry} from '../dependencies/paraswap/IParaSwapAugustusRegistry.sol';
+import {IAaveFlashLoanReceiver} from '../interfaces/IAaveFlashLoanReceiver.sol';
+import {IParaSwapDebtSwapAdapter} from '../interfaces/IParaSwapDebtSwapAdapter.sol';
+import {BaseParaSwapBuyAdapter} from './BaseParaSwapBuyAdapter.sol';
 
 /**
  * @title ParaSwapDebtSwapAdapter

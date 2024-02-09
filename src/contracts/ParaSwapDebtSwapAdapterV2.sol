@@ -4,7 +4,8 @@ pragma solidity ^0.8.10;
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
 import {DataTypes, ILendingPool} from 'aave-address-book/AaveV2.sol';
 import {IParaSwapAugustusRegistry} from './dependencies/paraswap/IParaSwapAugustusRegistry.sol';
-import {ParaSwapDebtSwapAdapter} from './ParaSwapDebtSwapAdapter.sol';
+import {BaseParaSwapAdapter} from './base/BaseParaSwapAdapter.sol';
+import {ParaSwapDebtSwapAdapter} from './base/ParaSwapDebtSwapAdapter.sol';
 
 /**
  * @title ParaSwapDebtSwapAdapter
@@ -17,9 +18,14 @@ contract ParaSwapDebtSwapAdapterV2 is ParaSwapDebtSwapAdapter {
     address pool,
     IParaSwapAugustusRegistry augustusRegistry,
     address owner
-  ) ParaSwapDebtSwapAdapter(addressesProvider, pool, augustusRegistry, owner) {}
+  ) ParaSwapDebtSwapAdapter(addressesProvider, pool, augustusRegistry, owner) {
+    // Intentionally left blank
+  }
 
-  function _getReserveData(address asset) internal view override returns (address, address, address) {
+  /// @inheritdoc BaseParaSwapAdapter
+  function _getReserveData(
+    address asset
+  ) internal view override returns (address, address, address) {
     DataTypes.ReserveData memory reserveData = ILendingPool(address(POOL)).getReserveData(asset);
     return (
       reserveData.variableDebtTokenAddress,
@@ -28,6 +34,7 @@ contract ParaSwapDebtSwapAdapterV2 is ParaSwapDebtSwapAdapter {
     );
   }
 
+  /// @inheritdoc BaseParaSwapAdapter
   function _supply(
     address asset,
     uint256 amount,

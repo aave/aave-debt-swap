@@ -7,12 +7,11 @@ import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAd
 import {AaveGovernanceV2} from 'aave-address-book/AaveGovernanceV2.sol';
 import {Errors} from 'aave-address-book/AaveV3.sol';
 import {AaveV3Ethereum, AaveV3EthereumAssets, IPool} from 'aave-address-book/AaveV3Ethereum.sol';
-import {BaseTest} from './utils/BaseTest.sol';
 import {ParaSwapLiquiditySwapAdapterV3} from 'src/contracts/ParaSwapLiquiditySwapAdapterV3.sol';
 import {IParaSwapAugustusRegistry} from 'src/contracts/dependencies/paraswap/IParaSwapAugustusRegistry.sol';
 import {AugustusRegistry} from 'src/contracts/dependencies/paraswap/AugustusRegistry.sol';
 import {IParaSwapLiquiditySwapAdapter} from 'src/contracts/interfaces/IParaSwapLiquiditySwapAdapter.sol';
-import {stdMath} from 'forge-std/StdMath.sol';
+import {BaseTest} from './utils/BaseTest.sol';
 
 contract LiquiditySwapAdapterV3Test is BaseTest {
   ParaSwapLiquiditySwapAdapterV3 internal liquiditySwapAdapter;
@@ -364,7 +363,6 @@ contract LiquiditySwapAdapterV3Test is BaseTest {
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV3EthereumAssets.LUSD_UNDERLYING;
-    address newCollateralAssetAToken = AaveV3EthereumAssets.LUSD_A_TOKEN;
 
     uint256 supplyAmount = 10_000 ether;
     uint256 borrowAmount = 1000 ether;
@@ -424,9 +422,6 @@ contract LiquiditySwapAdapterV3Test is BaseTest {
     _supply(AaveV3Ethereum.POOL, 15000e6, anotherCollateralAsset);
     _borrow(AaveV3Ethereum.POOL, borrowAmount, collateralAsset);
 
-    uint256 oldCollateralAssetATokenBalanceBefore = IERC20Detailed(collateralAssetAToken).balanceOf(
-      user
-    );
     uint256 newCollateralAssetATokenBalanceBefore = IERC20Detailed(newCollateralAssetAToken)
       .balanceOf(user);
 
@@ -553,7 +548,6 @@ contract LiquiditySwapAdapterV3Test is BaseTest {
     address collateralAssetAToken = AaveV3EthereumAssets.DAI_A_TOKEN;
     address collateralAsset = AaveV3EthereumAssets.DAI_UNDERLYING;
     address newCollateralAsset = AaveV3EthereumAssets.USDC_UNDERLYING;
-    address newCollateralAssetAToken = AaveV3EthereumAssets.USDC_A_TOKEN;
     vm.startPrank(user);
 
     _supply(AaveV3Ethereum.POOL, supplyAmount, collateralAsset);
@@ -672,7 +666,4 @@ contract LiquiditySwapAdapterV3Test is BaseTest {
     pool.withdraw(asset, amount, user);
   }
 
-  function _withinRange(uint256 a, uint256 b, uint256 diff) internal returns (bool) {
-    return stdMath.delta(a, b) <= diff;
-  }
 }

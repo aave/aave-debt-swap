@@ -300,10 +300,13 @@ Security considerations around the ParaSwap adapter contracts:
 
 - Contracts support Aave V2 and V3. There are contracts specifically designed for each version, as well as for working with GHO.
 
-- Using full balance of the user for actions supported by these adapter contracts require manipulating the ParaSwap calldata passed to the ParaSwap Augustus contract, and some of the swap routes do not support it. Therefore, in the case where full balance is used, the ParaSwap API call must exclude the following routes when calculating a swap:
-
-  - BUY: `simpleBuy`, `directUniV3Buy` and `directBalancerV2GivenOutSwap`.
-  - SELL: `simpleSwap`, `directUniV3Swap`, `directBalancerV2GivenInSwap`, `directBalancerV2GivenOutSwap`, `directCurveV1Swap` and `directCurveV2Swap`.
+- Using full balance of the user for actions supported by these adapter contracts require manipulating the ParaSwap calldata passed to the ParaSwap Augustus contract, and some of the swap routes do not support it. Therefore, in the case where full balance is used, the ParaSwap API call be made using a preferred set of methods.
+  - Excluding the following routes when calculating a swap, using `excludeContractMethods` option:
+    - BUY: `simpleBuy`, `directUniV3Buy` and `directBalancerV2GivenOutSwap`.
+    - SELL: `simpleSwap`, `directUniV3Swap`, `directBalancerV2GivenInSwap`, `directBalancerV2GivenOutSwap`, `directCurveV1Swap` and `directCurveV2Swap`.
+  - Including only these route when calculating a swap, using `includeContractMethods` option:
+    - BUY: `buy`.
+    - SELL: `multiSwap` and `megaSwap`. 
 
 - ParaSwap extracts token surplus if ParaSwap positive slippage happens: the trade ends up with a positive result favoring the user (e.g. receiving more assets than expected in a BUY, receiving more assets than expected for same amount of assets in exchange in a SELL).
   - Positive slippage means the trade was more efficient than expected, so user is not impacted by the surplus extraction theoretically (e.g. they will get as much tokens as expected). However, a misconfiguration or bad integration with these contracts can lead to artificially create positive slippage.

@@ -99,21 +99,10 @@ async function main(from, to, method, amount, user) {
     return;
   }
   // distinguish between exactOut and exactInOutMethod
-  const excludedMethod =
+  const preferredMethods =
     method === "SELL"
-      ? [
-          ContractMethod.simpleSwap,
-          ContractMethod.directUniV3Swap,
-          ContractMethod.directBalancerV2GivenInSwap,
-          ContractMethod.directBalancerV2GivenOutSwap,
-          ContractMethod.directCurveV1Swap,
-          ContractMethod.directCurveV2Swap,
-        ]
-      : [
-          ContractMethod.simpleBuy,
-          ContractMethod.directUniV3Buy,
-          ContractMethod.directBalancerV2GivenOutSwap,
-        ];
+      ? [ContractMethod.multiSwap, ContractMethod.megaSwap]
+      : [ContractMethod.buy];
   const priceRoute = await paraSwapMin.swap.getRate({
     srcToken: from,
     srcDecimals: FROM_DECIMALS,
@@ -124,7 +113,7 @@ async function main(from, to, method, amount, user) {
     ...(MAX
       ? {
           options: {
-            excludeContractMethods: [...excludedMethod],
+            includeContractMethods: [...preferredMethods],
           },
         }
       : {}),

@@ -53,15 +53,6 @@ abstract contract ParaSwapRepayAdapter is
     }
   }
 
-  /**
-   * @notice Renews the asset allowance to the Aave Pool
-   * @param reserve The address of the asset
-   */
-  function renewAllowance(address reserve) public {
-    IERC20(reserve).safeApprove(address(POOL), 0);
-    IERC20(reserve).safeApprove(address(POOL), type(uint256).max);
-  }
-
   /// @inheritdoc IParaSwapRepayAdapter
   function repayWithCollateral(
     RepayParams memory repayParams,
@@ -238,18 +229,6 @@ abstract contract ParaSwapRepayAdapter is
       params,
       REFERRER
     );
-  }
-
-  /**
-   * @dev Renews the asset allowance in case the current allowance is below a given threshold
-   * @param asset The address of the asset
-   * @param minAmount The minimum required allowance to the Aave Pool
-   */
-  function _conditionalRenewAllowance(address asset, uint256 minAmount) internal {
-    uint256 allowance = IERC20(asset).allowance(address(this), address(POOL));
-    if (allowance < minAmount) {
-      renewAllowance(asset);
-    }
   }
 
   /**

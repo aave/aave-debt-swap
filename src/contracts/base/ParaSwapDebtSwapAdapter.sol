@@ -44,11 +44,6 @@ abstract contract ParaSwapDebtSwapAdapter is
     }
   }
 
-  function renewAllowance(address reserve) public {
-    IERC20WithPermit(reserve).safeApprove(address(POOL), 0);
-    IERC20WithPermit(reserve).safeApprove(address(POOL), type(uint256).max);
-  }
-
   /**
    * @dev Swaps one type of debt to another. Therefore this methods performs the following actions in order:
    * 1. Delegate credit in new debt
@@ -234,12 +229,5 @@ abstract contract ParaSwapDebtSwapAdapter is
       swapParams.user
     );
     return amountSold;
-  }
-
-  function _conditionalRenewAllowance(address asset, uint256 minAmount) internal {
-    uint256 allowance = IERC20(asset).allowance(address(this), address(POOL));
-    if (allowance < minAmount) {
-      renewAllowance(asset);
-    }
   }
 }

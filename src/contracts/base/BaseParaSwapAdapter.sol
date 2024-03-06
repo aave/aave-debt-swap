@@ -121,7 +121,7 @@ abstract contract BaseParaSwapAdapter is Ownable, IBaseParaSwapAdapter {
     return aTokenBalanceDiff;
   }
 
-   /**
+  /**
    * @dev Renews the asset allowance in case the current allowance is below a given threshold
    * @param asset The address of the asset
    * @param minAmount The minimum required allowance to the Aave Pool
@@ -129,16 +129,8 @@ abstract contract BaseParaSwapAdapter is Ownable, IBaseParaSwapAdapter {
   function _conditionalRenewAllowance(address asset, uint256 minAmount) internal {
     uint256 allowance = IERC20(asset).allowance(address(this), address(POOL));
     if (allowance < minAmount) {
-      _renewAllowance(asset);
+      IERC20(asset).safeApprove(address(POOL), 0);
+      IERC20(asset).safeApprove(address(POOL), type(uint256).max);
     }
-  }
-
-    /**
-   * @notice Renews the asset allowance to the Aave Pool
-   * @param reserve The address of the asset
-   */
-  function _renewAllowance(address reserve) internal {
-    IERC20(reserve).safeApprove(address(POOL), 0);
-    IERC20(reserve).safeApprove(address(POOL), type(uint256).max);
   }
 }

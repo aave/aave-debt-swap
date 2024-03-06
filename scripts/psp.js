@@ -99,7 +99,7 @@ async function main(from, to, method, amount, user) {
     return;
   }
   // distinguish between exactOut and exactInOutMethod
-  const preferredMethods =
+  const includeContractMethods =
     method === "SELL"
       ? [ContractMethod.multiSwap, ContractMethod.megaSwap]
       : [ContractMethod.buy];
@@ -113,7 +113,7 @@ async function main(from, to, method, amount, user) {
     ...(MAX
       ? {
           options: {
-            includeContractMethods: [...preferredMethods],
+            includeContractMethods: [...includeContractMethods],
           },
         }
       : {}),

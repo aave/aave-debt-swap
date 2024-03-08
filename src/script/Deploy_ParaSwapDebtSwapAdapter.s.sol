@@ -130,19 +130,9 @@ contract BNBV3 is BNBScript {
     new ParaSwapDebtSwapAdapterV3(
       IPoolAddressesProvider(address(AaveV3BNB.POOL_ADDRESSES_PROVIDER)),
       address(AaveV3BNB.POOL),
-      AugustusRegistry.BNB,
+      IParaSwapAugustusRegistry(AugustusRegistry.BNB),
       GovernanceV3BNB.EXECUTOR_LVL_1
     );
   }
 }
 
-contract BNBV3 is BNBScript {
-  function run() external broadcast {
-    new ParaSwapDebtSwapAdapterV3(
-      IPoolAddressesProvider(address(AaveV3BNB.POOL_ADDRESSES_PROVIDER)),
-      address(AaveV3BNB.POOL),
-      AugustusRegistry.BNB,
-      GovernanceV3BNB.EXECUTOR_LVL_1
-    );
-  }
-}

@@ -121,3 +121,14 @@ contract BaseV3 is BaseScript {
     );
   }
 }
+
+contract BNBV3 is BNBScript {
+  function run() external broadcast {
+    new ParaSwapWithdrawSwapAdapterV3(
+      IPoolAddressesProvider(address(AaveV3Bnb.POOL_ADDRESSES_PROVIDER)),
+      address(AaveV3Bnb.POOL),
+      AugustusRegistry.BNB,
+      GovernanceV3BNB.EXECUTOR_LVL_1
+    );
+  }
+}

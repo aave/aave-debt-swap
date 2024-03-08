@@ -14,5 +14,7 @@ library AugustusRegistry {
 
   address public constant BSC = 0x05b4486f643914a818eD93Afc07457e9074be211;
 
+  address public constant BNB = 0x05b4486f643914a818eD93Afc07457e9074be211;
+
   address public constant BASE = 0x7E31B336F9E8bA52ba3c4ac861b033Ba90900bb3;
 }

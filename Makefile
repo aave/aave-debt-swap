@@ -26,3 +26,4 @@ ethereumv2 :; make deploy-ledger contract=scripts/Deploy.s.sol:EthereumV2 chain=
 ethereumv3 :; make deploy-ledger contract=scripts/Deploy.s.sol:EthereumV3 chain=mainnet
 
 basev3 :; make deploy-ledger contract=scripts/Deploy.s.sol:BaseV3 chain=base
+bnbv3 :;  make deploy-ledger contract=scripts/Deploy.s.sol:BNBV3 chain=bnb

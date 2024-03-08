@@ -17,6 +17,7 @@ arbitrum = "${RPC_ARBITRUM}"
 fantom = "${RPC_FANTOM}"
 harmony = "${RPC_HARMONY}"
 base = "${RPC_BASE}"
+bnb = "${RPC_BNB}"
 
 [etherscan]
 mainnet={key="${ETHERSCAN_API_KEY_MAINNET}",chainId=1}
@@ -26,5 +27,6 @@ polygon={key="${ETHERSCAN_API_KEY_POLYGON}",chainId=137}
 arbitrum={key="${ETHERSCAN_API_KEY_ARBITRUM}",chainId=42161}
 fantom={key="${ETHERSCAN_API_KEY_FANTOM}",chainId=250}
 base={key="${ETHERSCAN_API_KEY_BASE}",chainId=8453}
+bnb={key="${ETHERSCAN_API_KEY_BNB}",chainId=56,url='https://api.bscscan.com/api'}
 
 # See more config options https://github.com/gakonst/foundry/tree/master/config

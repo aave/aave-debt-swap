@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IPoolAddressesProvider} from '@aave/core-v3/contracts/interfaces/IPoolAddressesProvider.sol';
-import {ArbitrumScript, EthereumScript, PolygonScript, AvalancheScript, OptimismScript, BaseScript} from 'aave-helpers/ScriptUtils.sol';
+import {ArbitrumScript, EthereumScript, PolygonScript, AvalancheScript, OptimismScript, BaseScript, BNBScript} from 'aave-helpers/ScriptUtils.sol';
 import {GovernanceV3Ethereum} from 'aave-address-book/GovernanceV3Ethereum.sol';
 import {GovernanceV3Polygon} from 'aave-address-book/GovernanceV3Polygon.sol';
 import {GovernanceV3Avalanche} from 'aave-address-book/GovernanceV3Avalanche.sol';
